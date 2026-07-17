@@ -4,12 +4,15 @@
   "private": true,
   "description": "Asahi Shimbun part-time attendance & transportation-expense invoicing system (demo)",
   "workspaces": [
-    "shared"
+    "shared",
+    "server"
   ],
   "scripts": {
-    "build": "npm run build -w shared",
-    "test": "npm run test -w shared",
-    "test:watch": "npm run test:watch -w shared"
+    "build": "npm run build -w shared && npm run build -w server",
+    "test": "npm run test -w shared && npm run test -w server",
+    "test:watch": "npm run test:watch -w shared",
+    "migrate": "npm run migrate -w server",
+    "seed": "npm run seed -w server"
   },
   "engines": {
     "node": ">=22"
