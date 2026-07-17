@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# test / coverage
+coverage/
+
+# keep source scans and client docs out of the app bundle, but tracked in repo root
+# (assets/ and docs/ are intentionally versioned as project reference)

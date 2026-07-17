@@ -1,0 +1,16 @@
+{
+  "name": "@asahi/shared",
+  "version": "0.1.0",
+  "description": "Pure, dependency-free domain: payroll/tax calculation engine + types",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

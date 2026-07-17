@@ -1,0 +1,17 @@
+{
+  "name": "asahi-attendance-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Asahi Shimbun part-time attendance & transportation-expense invoicing system (demo)",
+  "workspaces": [
+    "shared"
+  ],
+  "scripts": {
+    "build": "npm run build -w shared",
+    "test": "npm run test -w shared",
+    "test:watch": "npm run test:watch -w shared"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
