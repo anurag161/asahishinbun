@@ -1,6 +1,8 @@
 import { createApp } from './app';
 import { config } from './config';
 import type { Db } from './db/Db';
+import { createMailer } from './services/emailService';
+import { puppeteerRenderer } from './pdf/pdfRenderer';
 
 async function bootstrap() {
   let db: Db;
@@ -19,9 +21,18 @@ async function bootstrap() {
     console.log('     Demo logins:  admin@example.com / admin123   ·   staff@example.com / staff123\n');
   }
 
-  const app = createApp(db);
+  const mailer = createMailer();
+  const pdfAvailable = await puppeteerRenderer.available();
+
+  const app = createApp(db, { mailer, pdf: puppeteerRenderer });
   app.listen(config.port, () => {
     console.log(`Asahi payroll app listening on http://localhost:${config.port}`);
+    console.log(
+      `  • PDF:   ${pdfAvailable ? 'server-side enabled (Chromium found)' : 'browser Save-as-PDF only (run `npm i puppeteer -w server`)'}`,
+    );
+    console.log(
+      `  • Email: ${mailer.live ? `SMTP configured (${config.smtp.host})` : 'capture mode — set SMTP_* in .env to send for real'}`,
+    );
   });
 }
 

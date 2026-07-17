@@ -32,7 +32,9 @@
     "title": "Monthly / Documents", "subtitle": "View, save as PDF, or email documents",
     "timesheet": "Timesheet", "invoice": "Invoice", "payslip": "Payslip",
     "view": "View", "pdf": "PDF", "email": "Email", "emailed": "Sent to {{to}}",
-    "emailedCaptured": "Send simulated (no SMTP configured)", "print": "Print / Save as PDF"
+    "emailedCaptured": "Send simulated (no SMTP configured)", "print": "Print / Save as PDF",
+    "pdfReady": "PDF: server-side ready", "pdfBrowser": "PDF: use the browser's Save as PDF",
+    "emailReady": "Email: SMTP configured", "emailCapture": "Email: send simulated (no SMTP)"
   },
   "stadiums": {
     "title": "Stadiums", "name": "Name", "address": "Address", "station": "Nearest station"

@@ -125,6 +125,7 @@ h3 { font-size: 15px; }
 .btn.danger:hover { background: var(--danger-soft); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn.sm { padding: 5px 10px; font-size: 12px; }
+.btn-pdf:hover { background: var(--good); border-color: var(--good); color: #fff; }
 
 /* Forms */
 .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }

@@ -1,6 +1,11 @@
+import path from 'node:path';
 import dotenv from 'dotenv';
 
+// Load .env from the current dir, the repo root, and the server dir (first wins),
+// so both `npm run demo` (root cwd) and `npm run dev -w server` (server cwd) find it.
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 const isProd = nodeEnv === 'production';

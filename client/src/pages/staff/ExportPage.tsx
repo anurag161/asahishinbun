@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, authFetch } from '../../api/client';
 import type { User } from '../../api/types';
@@ -9,6 +9,11 @@ import { currentMonth } from '../../utils/format';
 type DocType = 'timesheet' | 'invoice' | 'payslip';
 const DOC_TYPES: DocType[] = ['timesheet', 'invoice', 'payslip'];
 
+interface Capabilities {
+  pdf: boolean;
+  email: boolean;
+}
+
 export function ExportPage() {
   const { t } = useTranslation();
   const { notify } = useToast();
@@ -16,9 +21,12 @@ export function ExportPage() {
   const [me, setMe] = useState<User | null>(null);
   const [active, setActive] = useState<DocType>('payslip');
   const [html, setHtml] = useState('');
+  const [caps, setCaps] = useState<Capabilities>({ pdf: false, email: false });
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     api.get<User>('/api/auth/me').then(setMe);
+    api.get<Capabilities>('/api/capabilities').then(setCaps);
   }, []);
 
   async function view(type: DocType) {
@@ -42,24 +50,22 @@ export function ExportPage() {
     window.open(URL.createObjectURL(blob), '_blank');
   }
 
+  /** Print the already-loaded document (same-origin iframe → no popup blocker). */
   function printDoc() {
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    w.print();
+    iframeRef.current?.contentWindow?.focus();
+    iframeRef.current?.contentWindow?.print();
   }
 
   async function email(type: DocType) {
     try {
-      const res = await api.post<{ to: string; delivery: string }>(
+      const res = await api.post<{ to: string; delivery: string; pdfAttached: boolean }>(
         `/api/documents/${type}/${me!.id}/email?month=${month}`,
       );
       notify(
         res.delivery === 'smtp'
           ? t('export.emailed', { to: res.to })
           : t('export.emailedCaptured'),
+        res.delivery === 'smtp' ? 'ok' : 'err',
       );
     } catch {
       notify('Email failed', 'err');
@@ -86,19 +92,27 @@ export function ExportPage() {
               >
                 {t('export.view')}
               </button>
-              <button className="btn sm" onClick={() => openPdf(type)}>{t('export.pdf')}</button>
+              <button className="btn sm btn-pdf" onClick={() => openPdf(type)} title={caps.pdf ? '' : t('export.print')}>
+                {t('export.pdf')}
+              </button>
               <button className="btn sm" onClick={() => email(type)}>{t('export.email')}</button>
             </div>
           </div>
         ))}
       </div>
 
+      <div className="banner" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+        {caps.pdf ? '🖨 ' + t('export.pdfReady') : '🖨 ' + t('export.pdfBrowser')} ·{' '}
+        {caps.email ? '✉ ' + t('export.emailReady') : '✉ ' + t('export.emailCapture')}
+      </div>
+
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
           <strong>{t(`export.${active}`)}</strong>
-          <button className="btn sm" onClick={printDoc}>{t('export.print')}</button>
+          <button className="btn sm primary" onClick={printDoc}>{t('export.print')}</button>
         </div>
         <iframe
+          ref={iframeRef}
           title={active}
           srcDoc={html}
           style={{ width: '100%', height: 640, border: 'none', background: '#fff' }}

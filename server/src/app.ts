@@ -5,7 +5,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import type { Db } from './db/Db';
 import { config } from './config';
-import { errorHandler } from './middleware/errorHandler';
+import { AppError, asyncHandler, errorHandler } from './middleware/errorHandler';
+import { authMiddleware, type AuthRequest } from './middleware/authMiddleware';
+import { requireRole } from './middleware/roleMiddleware';
+import { userRepo } from './repositories/userRepo';
 import { authRouter } from './routes/auth';
 import { attendanceRouter } from './routes/attendance';
 import { expensesRouter } from './routes/expenses';
@@ -35,6 +38,37 @@ export function createApp(db: Db, deps: AppDeps = {}) {
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
+
+  // What the running server can actually do — the client uses this to guide the UI.
+  app.get('/api/capabilities', async (_req, res) => {
+    res.json({
+      pdf: await documentDeps.pdf.available(),
+      email: documentDeps.mailer.live,
+    });
+  });
+
+  // Admin: send a test email to verify SMTP configuration (goes to the admin's own address).
+  app.post(
+    '/api/admin/test-email',
+    authMiddleware,
+    requireRole('admin'),
+    asyncHandler(async (req: AuthRequest, res) => {
+      const user = await userRepo.findById(db, req.user!.id);
+      const to = (req.body?.to as string) || user?.email;
+      if (!to) throw new AppError(400, 'No recipient address');
+      const { messageId } = await documentDeps.mailer.send({
+        to,
+        subject: '【テスト】朝日新聞 勤怠・交通費システム',
+        html: '<p>SMTP テストメールです。これが届いていれば送信設定は正常です。</p>',
+      });
+      res.json({
+        sent: true,
+        to,
+        delivery: documentDeps.mailer.live ? 'smtp' : 'captured',
+        messageId,
+      });
+    }),
+  );
 
   app.use('/api/auth', authRouter(db));
   app.use('/api/attendance', attendanceRouter(db));
