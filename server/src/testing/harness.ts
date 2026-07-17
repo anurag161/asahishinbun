@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { newDb } from 'pg-mem';
 import type { Express } from 'express';
-import { createApp } from '../app';
+import { createApp, type AppDeps } from '../app';
 import type { Db } from '../db/Db';
 import { seedSampleMonth, type SeedResult } from '../db/sampleData';
 import { hashPassword } from '../auth/password';
@@ -20,7 +20,7 @@ export interface TestContext extends SeedResult {
   staffToken: string;
 }
 
-export async function makeTestContext(): Promise<TestContext> {
+export async function makeTestContext(deps: AppDeps = {}): Promise<TestContext> {
   const mem = newDb();
   const { Pool } = mem.adapters.createPg();
   const pool = new Pool();
@@ -39,7 +39,7 @@ export async function makeTestContext(): Promise<TestContext> {
   const seeded = await seedSampleMonth(db, { adminPasswordHash, staffPasswordHash });
 
   return {
-    app: createApp(db),
+    app: createApp(db, deps),
     db,
     ...seeded,
     adminToken: signToken({ id: seeded.adminId, role: 'admin' }),

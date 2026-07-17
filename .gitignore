@@ -23,5 +23,8 @@ npm-debug.log*
 # test / coverage
 coverage/
 
+# generated document preview (dev only)
+*-preview.html
+
 # keep source scans and client docs out of the app bundle, but tracked in repo root
 # (assets/ and docs/ are intentionally versioned as project reference)

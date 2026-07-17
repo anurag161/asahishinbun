@@ -11,9 +11,19 @@ import { mypageRouter } from './routes/mypage';
 import { stadiumsRouter } from './routes/stadiums';
 import { adminRouter } from './routes/admin';
 import { payrollRouter } from './routes/payroll';
+import { documentsRouter, type DocumentDeps } from './routes/documents';
+import { puppeteerRenderer } from './pdf/pdfRenderer';
+import { createMailer } from './services/emailService';
 
-/** Build the Express app around a database. `db` is injectable for testing. */
-export function createApp(db: Db) {
+export type AppDeps = Partial<DocumentDeps>;
+
+/** Build the Express app around a database. `db` and `deps` are injectable for testing. */
+export function createApp(db: Db, deps: AppDeps = {}) {
+  const documentDeps: DocumentDeps = {
+    pdf: deps.pdf ?? puppeteerRenderer,
+    mailer: deps.mailer ?? createMailer(),
+  };
+
   const app = express();
 
   app.use(helmet());
@@ -31,6 +41,7 @@ export function createApp(db: Db) {
   app.use('/api/stadiums', stadiumsRouter(db));
   app.use('/api/admin', adminRouter(db));
   app.use('/api/payroll', payrollRouter(db));
+  app.use('/api/documents', documentsRouter(db, documentDeps));
 
   app.use(errorHandler);
   return app;

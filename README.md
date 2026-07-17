@@ -11,7 +11,7 @@ free-tier architecture.
 
 ```
 shared/   Pure, dependency-free domain: the payroll/tax calculation engine + types   ← Phase 1 ✅
-server/   Node + Express API (auth, masters, attendance, expenses, payroll)          ← Phase 2–3 ✅
+server/   Node + Express API (auth, masters, attendance, expenses, payroll, docs)    ← Phase 2–4 ✅
 client/   React + Vite dashboards (staff + admin), JP/EN                              (Phase 5)
 docs/     Client requirements PDF (要件書)
 assets/   Client's sample source documents (勤務表 / 請求明細書 / 給料計算書 / 丙税額表)
@@ -34,8 +34,26 @@ Single login; role decides access (`staff` / `admin`). JWT Bearer tokens.
 | `GET/PUT /api/admin/rates` | admin | Pay rates (no redeploy) |
 | `GET /api/admin/records?month=` | admin | 全体実績確認 (per-staff summaries) |
 | `GET /api/payroll/:staffId?month=` | staff(self)/admin | Full engine result |
+| `GET /api/documents/:type/:staffId?month=&format=html\|pdf` | staff(self)/admin | 勤務表 / 請求明細書 / 給料計算書 |
+| `POST /api/documents/:type/:staffId/email?month=` | staff(self)/admin | Email the document to the staff member |
 
 Demo credentials after seeding: `admin@example.com / admin123`, `staff@example.com / staff123`.
+
+### Documents & PDF (Phase 4)
+
+The three Asahi forms are generated as faithful **HTML** (the fidelity-critical layer) from the
+engine's output. Two ways to a PDF:
+
+- **Zero-dependency:** open the HTML and use the browser's *Save as PDF* — perfect fidelity, free.
+- **Server-side** (for the email attachment / `format=pdf`): install Chromium once —
+  `npm i puppeteer -w server`. Without it, `format=pdf` returns 501 and email sends HTML.
+
+Email uses nodemailer; with no SMTP configured it captures messages (dev), and with Brevo/Gmail SMTP
+it sends for real (both free). Preview the documents locally:
+
+```bash
+npm run build && node scripts/preview-documents.mjs   # writes server/asahi-documents-preview.html
+```
 
 ## Status
 
