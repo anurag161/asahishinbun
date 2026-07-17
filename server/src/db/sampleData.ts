@@ -17,8 +17,8 @@ export interface Queryable {
   query(sql: string, params?: unknown[]): Promise<{ rows: any[] }>;
 }
 
-// Placeholder — real bcrypt hashes are set when auth lands in Phase 3.
-const PLACEHOLDER_HASH = 'PLACEHOLDER_SET_IN_PHASE_3';
+// Placeholder used only when a caller doesn't supply real password hashes.
+const PLACEHOLDER_HASH = 'PLACEHOLDER_NO_LOGIN';
 
 export interface SeedResult {
   adminId: number;
@@ -26,7 +26,17 @@ export interface SeedResult {
   stadiumId: number;
 }
 
-export async function seedSampleMonth(db: Queryable): Promise<SeedResult> {
+export interface SeedOptions {
+  adminPasswordHash?: string;
+  staffPasswordHash?: string;
+}
+
+export async function seedSampleMonth(
+  db: Queryable,
+  opts: SeedOptions = {},
+): Promise<SeedResult> {
+  const adminHash = opts.adminPasswordHash ?? PLACEHOLDER_HASH;
+  const staffHash = opts.staffPasswordHash ?? PLACEHOLDER_HASH;
   // Pay rates (令和8年).
   await db.query(
     `INSERT INTO rate_config
@@ -45,14 +55,14 @@ export async function seedSampleMonth(db: Queryable): Promise<SeedResult> {
   const admin = await db.query(
     `INSERT INTO users (name, email, password_hash, role)
      VALUES ($1, $2, $3, 'admin') RETURNING id`,
-    ['管理者', 'admin@example.com', PLACEHOLDER_HASH],
+    ['管理者', 'admin@example.com', adminHash],
   );
   const adminId = admin.rows[0].id as number;
 
   const staff = await db.query(
     `INSERT INTO users (name, email, password_hash, role)
      VALUES ($1, $2, $3, 'staff') RETURNING id`,
-    ['サンプル 太郎', 'staff@example.com', PLACEHOLDER_HASH],
+    ['サンプル 太郎', 'staff@example.com', staffHash],
   );
   const staffId = staff.rows[0].id as number;
 

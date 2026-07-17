@@ -2,6 +2,7 @@ import { pool } from './pool';
 import { config } from '../config';
 import { runMigrations } from './migrate';
 import { seedSampleMonth } from './sampleData';
+import { hashPassword } from '../auth/password';
 
 /**
  * Dev/demo seed: applies migrations, resets domain tables, and loads the June
@@ -20,8 +21,17 @@ async function seed() {
      RESTART IDENTITY CASCADE`,
   );
 
-  const { staffId } = await seedSampleMonth(pool);
+  // Demo credentials: admin@example.com / admin123, staff@example.com / staff123
+  const [adminPasswordHash, staffPasswordHash] = await Promise.all([
+    hashPassword('admin123'),
+    hashPassword('staff123'),
+  ]);
+  const { staffId } = await seedSampleMonth(pool, {
+    adminPasswordHash,
+    staffPasswordHash,
+  });
   console.log(`Seeded June 2026 sample month (staff_id=${staffId}).`);
+  console.log('Demo login — admin@example.com / admin123 · staff@example.com / staff123');
 }
 
 seed()
