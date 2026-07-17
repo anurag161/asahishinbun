@@ -1,0 +1,53 @@
+{
+  "app": { "title": "Attendance & Transport System", "brand": "Asahi" },
+  "nav": {
+    "mypage": "My Page", "attendance": "Attendance & Expenses", "export": "Monthly / Documents",
+    "stadiums": "Stadiums", "staff": "Staff", "routes": "Route Fares", "records": "All Records",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Sign in", "email": "Email", "password": "Password",
+    "submit": "Sign in", "error": "Invalid email or password", "demo": "Demo accounts"
+  },
+  "common": {
+    "month": "Month", "save": "Save", "add": "Add", "edit": "Edit", "delete": "Delete",
+    "cancel": "Cancel", "close": "Close", "loading": "Loading…", "none": "No data",
+    "yen": "JPY", "hours": "h", "days": "days", "actions": "Actions", "confirmDelete": "Delete this?"
+  },
+  "mypage": {
+    "title": "My Page", "subtitle": "This month's activity",
+    "workDays": "Work days", "totalHours": "Total hours", "transport": "Transport total",
+    "salary": "Salary", "tax": "Withholding tax", "net": "Net pay", "gross": "Gross",
+    "goExport": "View monthly documents"
+  },
+  "attendance": {
+    "title": "Attendance & Expenses", "subtitle": "Enter your daily work records",
+    "date": "Date", "stadium": "Stadium", "start": "Start", "end": "End",
+    "breakTaken": "Break taken", "breakMinutes": "Break (min)", "worked": "Worked",
+    "bucket": "Cost bucket", "transportAuto": "Transport (auto)", "addDay": "Add work day",
+    "applied": "Auto-applied transport {{yen}}", "noRoute": "No registered route — transport not auto-applied",
+    "existing": "Registered days", "expenses": "Transport & expense lines"
+  },
+  "export": {
+    "title": "Monthly / Documents", "subtitle": "View, save as PDF, or email documents",
+    "timesheet": "Timesheet", "invoice": "Invoice", "payslip": "Payslip",
+    "view": "View", "pdf": "PDF", "email": "Email", "emailed": "Sent to {{to}}",
+    "emailedCaptured": "Send simulated (no SMTP configured)", "print": "Print / Save as PDF"
+  },
+  "stadiums": {
+    "title": "Stadiums", "name": "Name", "address": "Address", "station": "Nearest station"
+  },
+  "staff": {
+    "title": "Staff", "name": "Name", "email": "Email", "password": "Password",
+    "address": "Address", "homeStation": "Home nearest station", "phone": "Phone"
+  },
+  "routes": {
+    "title": "Route Fares", "from": "From station", "to": "To station", "fare": "One-way fare",
+    "mode": "Mode", "note": "Route note", "hint": "Register one-way fares between home and stadium stations"
+  },
+  "records": {
+    "title": "All Records", "subtitle": "Monthly totals for all staff", "staff": "Staff",
+    "workDays": "Work days", "salary": "Salary", "transport": "Transport", "tax": "Tax", "net": "Net pay"
+  },
+  "bucket": { "daikai": "Tournament", "henshu": "Editorial" }
+}

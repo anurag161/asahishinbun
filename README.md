@@ -12,7 +12,7 @@ free-tier architecture.
 ```
 shared/   Pure, dependency-free domain: the payroll/tax calculation engine + types   ← Phase 1 ✅
 server/   Node + Express API (auth, masters, attendance, expenses, payroll, docs)    ← Phase 2–4 ✅
-client/   React + Vite dashboards (staff + admin), JP/EN                              (Phase 5)
+client/   React + Vite dashboards (staff + admin), JP/EN                              ← Phase 5 ✅
 docs/     Client requirements PDF (要件書)
 assets/   Client's sample source documents (勤務表 / 請求明細書 / 給料計算書 / 丙税額表)
 ```
@@ -72,11 +72,32 @@ real June 2026 documents exactly — end-to-end through the DB and the HTTP API:
 ## Develop
 
 ```bash
-npm install        # install workspace deps
-npm test           # run the golden-master + unit tests (vitest)
-npm run build      # type-check and compile shared/
-npm run test:watch # watch mode
+npm install        # install all workspace deps
+npm test           # golden-master + API integration + client tests (vitest)
+npm run build      # type-check & build shared, server, and client
 ```
+
+## Run the full stack locally
+
+1. Create a free **Neon** Postgres project → copy its connection string.
+2. `cp server/.env.example server/.env` and set `DATABASE_URL` (and a `JWT_SECRET`).
+3. Seed + run:
+
+```bash
+npm run migrate    # create tables
+npm run seed       # load the June 2026 sample + demo logins
+npm run dev        # server (:4000) + client (:5173) together
+```
+
+Open http://localhost:5173 and sign in as `staff@example.com / staff123` (or the admin).
+The June sample opens correct-to-the-yen; enter more days to see transport auto-applied.
+
+## Screens
+
+- **Login** — single screen, role decides destination.
+- **Staff:** My Page (month summary + payroll) · Attendance & Expenses (per-day entry, auto transport) ·
+  Monthly / Documents (view 勤務表 / 請求明細書 / 給料計算書, Save-as-PDF, email).
+- **Admin:** All Records (全体実績) · Stadiums · Staff · Route Fares masters.
 
 ## Key design rule
 
