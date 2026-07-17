@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -42,6 +44,20 @@ export function createApp(db: Db, deps: AppDeps = {}) {
   app.use('/api/admin', adminRouter(db));
   app.use('/api/payroll', payrollRouter(db));
   app.use('/api/documents', documentsRouter(db, documentDeps));
+
+  // Serve the built client (single-origin) when it exists, with SPA fallback.
+  const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');
+  const indexHtml = path.join(clientDist, 'index.html');
+  if (fs.existsSync(indexHtml)) {
+    app.use(express.static(clientDist));
+    app.use((req, res, next) => {
+      if (req.method === 'GET' && !req.path.startsWith('/api')) {
+        res.sendFile(indexHtml);
+        return;
+      }
+      next();
+    });
+  }
 
   app.use(errorHandler);
   return app;

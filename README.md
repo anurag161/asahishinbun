@@ -4,8 +4,17 @@ Demo web system that automates attendance reporting, transportation-expense clai
 part-time wage invoicing for 朝日新聞総合サービス's high-school-baseball (高校野球) stadium staff.
 
 Built for **MORABU (モラブ阪神工業)** as a demo to win the production contract. Runs entirely on
-free tiers — see [`v2plan.md`](./v2plan.md) for the full execution plan, verified domain rules, and
-free-tier architecture.
+free tiers — see [`v2plan.md`](./v2plan.md) for the full execution plan and [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+for hosting.
+
+## Try it in one command (no database, no setup)
+
+```bash
+npm install && npm run demo      # → http://localhost:4000
+```
+
+Sign in as **staff@example.com / staff123** or **admin@example.com / admin123**. It boots on an
+in-memory database seeded with the client's June 2026 sample, so it opens correct-to-the-yen.
 
 ## Monorepo layout
 
