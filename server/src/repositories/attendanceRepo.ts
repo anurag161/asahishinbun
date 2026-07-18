@@ -94,6 +94,18 @@ export const attendanceRepo = {
     return rows[0] ? normalize(rows[0]) : undefined;
   },
 
+  async updateBucket(
+    db: Db,
+    id: number,
+    bucket: CostBucket,
+  ): Promise<AttendanceRow | undefined> {
+    const { rows } = await db.query<AttendanceRow>(
+      `UPDATE attendance SET bucket = $2 WHERE id = $1 RETURNING *`,
+      [id, bucket],
+    );
+    return rows[0] ? normalize(rows[0]) : undefined;
+  },
+
   async remove(db: Db, id: number): Promise<void> {
     await db.query(`DELETE FROM attendance WHERE id = $1`, [id]);
   },

@@ -77,4 +77,19 @@ export const expenseRepo = {
       [staffId, date],
     );
   },
+
+  /** Move a day's auto transport lines to a bucket (follows an attendance re-tag). */
+  async setBucketForAutoTransport(
+    db: Db,
+    staffId: number,
+    date: string,
+    bucket: CostBucket,
+  ): Promise<void> {
+    await db.query(
+      `UPDATE expense_lines SET bucket = $3
+       WHERE staff_id = $1 AND expense_date = $2
+         AND category = 'transport' AND source = 'auto'`,
+      [staffId, date, bucket],
+    );
+  },
 };

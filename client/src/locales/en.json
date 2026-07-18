@@ -50,7 +50,9 @@
   },
   "records": {
     "title": "All Records", "subtitle": "Monthly totals for all staff", "staff": "Staff",
-    "workDays": "Work days", "salary": "Salary", "transport": "Transport", "tax": "Tax", "net": "Net pay"
+    "workDays": "Work days", "salary": "Salary", "transport": "Transport", "tax": "Tax", "net": "Net pay",
+    "details": "Details", "retagTitle": "Re-tag cost bucket (direct / indirect)",
+    "retagHint": "Assign each work day to Tournament (direct) or Editorial (indirect). Its transport moves to the same bucket."
   },
   "accounts": {
     "title": "Accounts", "subtitle": "Create accounts, change roles, reset passwords",

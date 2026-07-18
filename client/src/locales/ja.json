@@ -51,7 +51,9 @@
   },
   "records": {
     "title": "全体実績", "subtitle": "全アルバイトの月次集計", "staff": "アルバイト",
-    "workDays": "稼働日数", "salary": "給料", "transport": "交通費", "tax": "所得税", "net": "差引支給額"
+    "workDays": "稼働日数", "salary": "給料", "transport": "交通費", "tax": "所得税", "net": "差引支給額",
+    "details": "詳細", "retagTitle": "区分の変更（直接費／間接費）",
+    "retagHint": "各勤務日を大会経費（直接費）または編集費（間接費）に振り分けます。交通費も同じ区分に移動します。"
   },
   "accounts": {
     "title": "アカウント管理", "subtitle": "アカウントの登録・権限変更・パスワード再設定",

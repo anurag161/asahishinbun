@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { DEFAULT_RATES } from '@asahi/shared';
+import { COST_BUCKETS, DEFAULT_RATES } from '@asahi/shared';
 import type { Db } from '../db/Db';
 import { AppError, asyncHandler } from '../middleware/errorHandler';
 import { authMiddleware, type AuthRequest } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
 import { userRepo } from '../repositories/userRepo';
 import { masterRepo } from '../repositories/masterRepo';
+import { attendanceRepo } from '../repositories/attendanceRepo';
+import { expenseRepo } from '../repositories/expenseRepo';
 import { computeForStaffMonth } from '../services/payrollService';
 import { hashPassword } from '../auth/password';
 import { int, oneOf, optInt, optStr, str } from '../utils/parse';
@@ -156,6 +158,37 @@ export function adminRouter(db: Db): Router {
       }
       await userRepo.remove(db, id);
       res.status(204).end();
+    }),
+  );
+
+  // --- Per-day cost-bucket re-tagging (direct vs indirect) ---
+  // List a staff member's attendance days for a month (for the re-tag view).
+  router.get(
+    '/staff/:id/attendance',
+    asyncHandler(async (req, res) => {
+      const staffId = Number(req.params.id);
+      const month = str(req.query as Record<string, unknown>, 'month');
+      res.json(await attendanceRepo.listForMonth(db, staffId, month));
+    }),
+  );
+
+  // Re-tag one day's bucket; its auto transport lines follow the same bucket.
+  router.put(
+    '/attendance/:id/bucket',
+    asyncHandler(async (req, res) => {
+      const id = Number(req.params.id);
+      const bucket = oneOf(req.body, 'bucket', COST_BUCKETS);
+      const existing = await attendanceRepo.getById(db, id);
+      if (!existing) throw new AppError(404, 'Attendance not found');
+
+      const updated = await attendanceRepo.updateBucket(db, id, bucket);
+      await expenseRepo.setBucketForAutoTransport(
+        db,
+        existing.staff_id,
+        existing.work_date,
+        bucket,
+      );
+      res.json(updated);
     }),
   );
 
