@@ -2,8 +2,8 @@
   "app": { "title": "Attendance & Transport System", "brand": "Asahi" },
   "nav": {
     "mypage": "My Page", "attendance": "Attendance & Expenses", "export": "Monthly / Documents",
-    "stadiums": "Stadiums", "staff": "Staff", "routes": "Route Fares", "records": "All Records",
-    "logout": "Log out"
+    "stadiums": "Stadiums", "staff": "Staff", "accounts": "Accounts",
+    "routes": "Route Fares", "records": "All Records", "logout": "Log out"
   },
   "login": {
     "title": "Sign in", "email": "Email", "password": "Password",
@@ -50,6 +50,12 @@
   "records": {
     "title": "All Records", "subtitle": "Monthly totals for all staff", "staff": "Staff",
     "workDays": "Work days", "salary": "Salary", "transport": "Transport", "tax": "Tax", "net": "Net pay"
+  },
+  "accounts": {
+    "title": "Accounts", "subtitle": "Create accounts, change roles, reset passwords",
+    "name": "Name", "email": "Email", "password": "Password", "role": "Role",
+    "staff": "Staff", "admin": "Admin", "resetPassword": "Reset password",
+    "newPassword": "New password for {{name}}", "you": "you"
   },
   "bucket": { "daikai": "Tournament", "henshu": "Editorial" }
 }

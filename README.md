@@ -39,7 +39,8 @@ Single login; role decides access (`staff` / `admin`). JWT Bearer tokens.
 | `GET /api/stadiums` | any | Stadium list (staff pick a stadium) |
 | `POST/PUT/DELETE /api/stadiums` | admin | 球場マスタ |
 | `GET/POST/DELETE /api/admin/route-fares` | admin | 区間別交通費マスタ |
-| `GET/POST /api/admin/staff` · `PUT /api/admin/staff/:id/profile` | admin | アルバイトマスタ + accounts |
+| `GET/POST /api/admin/staff` · `PUT /api/admin/staff/:id/profile` | admin | アルバイトマスタ |
+| `GET/POST/PUT/DELETE /api/admin/accounts` (+ `/:id/password`) | admin | アカウント管理 (role + password) |
 | `GET/PUT /api/admin/rates` | admin | Pay rates (no redeploy) |
 | `GET /api/admin/records?month=` | admin | 全体実績確認 (per-staff summaries) |
 | `GET /api/payroll/:staffId?month=` | staff(self)/admin | Full engine result |
@@ -106,7 +107,7 @@ The June sample opens correct-to-the-yen; enter more days to see transport auto-
 - **Login** — single screen, role decides destination.
 - **Staff:** My Page (month summary + payroll) · Attendance & Expenses (per-day entry, auto transport) ·
   Monthly / Documents (view 勤務表 / 請求明細書 / 給料計算書, Save-as-PDF, email).
-- **Admin:** All Records (全体実績) · Stadiums · Staff · Route Fares masters.
+- **Admin:** All Records (全体実績) · Stadiums · Staff · Accounts (create/role/password) · Route Fares.
 
 ## Key design rule
 

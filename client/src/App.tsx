@@ -10,6 +10,7 @@ import { StadiumsPage } from './pages/admin/StadiumsPage';
 import { StaffPage } from './pages/admin/StaffPage';
 import { RouteFaresPage } from './pages/admin/RouteFaresPage';
 import { RecordsPage } from './pages/admin/RecordsPage';
+import { AccountsPage } from './pages/admin/AccountsPage';
 
 function Home() {
   const { user, loading } = useAuth();
@@ -45,6 +46,7 @@ export function App() {
         <Route path="/admin/records" element={<RecordsPage />} />
         <Route path="/admin/stadiums" element={<StadiumsPage />} />
         <Route path="/admin/staff" element={<StaffPage />} />
+        <Route path="/admin/accounts" element={<AccountsPage />} />
         <Route path="/admin/routes" element={<RouteFaresPage />} />
       </Route>
 

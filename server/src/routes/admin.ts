@@ -2,13 +2,15 @@ import { Router } from 'express';
 import { DEFAULT_RATES } from '@asahi/shared';
 import type { Db } from '../db/Db';
 import { AppError, asyncHandler } from '../middleware/errorHandler';
-import { authMiddleware } from '../middleware/authMiddleware';
+import { authMiddleware, type AuthRequest } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
 import { userRepo } from '../repositories/userRepo';
 import { masterRepo } from '../repositories/masterRepo';
 import { computeForStaffMonth } from '../services/payrollService';
 import { hashPassword } from '../auth/password';
-import { int, optInt, optStr, str } from '../utils/parse';
+import { int, oneOf, optInt, optStr, str } from '../utils/parse';
+
+const ROLES = ['staff', 'admin'] as const;
 
 export function adminRouter(db: Db): Router {
   const router = Router();
@@ -66,6 +68,93 @@ export function adminRouter(db: Db): Router {
     '/staff/:id',
     asyncHandler(async (req, res) => {
       await userRepo.remove(db, Number(req.params.id));
+      res.status(204).end();
+    }),
+  );
+
+  // --- Account management (§3.5): both roles, with role & password editing ---
+  router.get(
+    '/accounts',
+    asyncHandler(async (_req, res) => {
+      res.json(await userRepo.listAll(db));
+    }),
+  );
+
+  router.post(
+    '/accounts',
+    asyncHandler(async (req, res) => {
+      const email = str(req.body, 'email');
+      if (await userRepo.findByEmail(db, email)) {
+        throw new AppError(409, 'Email already in use');
+      }
+      const role = oneOf(req.body, 'role', ROLES);
+      const passwordHash = await hashPassword(str(req.body, 'password'));
+      const user = await userRepo.create(db, {
+        name: str(req.body, 'name'),
+        email,
+        passwordHash,
+        role,
+      });
+      if (role === 'staff') {
+        await userRepo.upsertProfile(db, {
+          userId: user.id,
+          address: optStr(req.body, 'address'),
+          homeNearestStation: optStr(req.body, 'homeNearestStation'),
+          phone: optStr(req.body, 'phone'),
+        });
+      }
+      res.status(201).json(user);
+    }),
+  );
+
+  router.put(
+    '/accounts/:id',
+    asyncHandler(async (req, res) => {
+      const id = Number(req.params.id);
+      const target = await userRepo.findById(db, id);
+      if (!target) throw new AppError(404, 'Account not found');
+
+      const email = str(req.body, 'email');
+      const role = oneOf(req.body, 'role', ROLES);
+      const clash = await userRepo.findByEmail(db, email);
+      if (clash && clash.id !== id) throw new AppError(409, 'Email already in use');
+      if (target.role === 'admin' && role !== 'admin' && (await userRepo.adminCount(db)) <= 1) {
+        throw new AppError(400, 'Cannot demote the last admin');
+      }
+
+      const updated = await userRepo.updateAccount(db, id, {
+        name: str(req.body, 'name'),
+        email,
+        role,
+      });
+      res.json(updated);
+    }),
+  );
+
+  router.put(
+    '/accounts/:id/password',
+    asyncHandler(async (req, res) => {
+      const id = Number(req.params.id);
+      if (!(await userRepo.findById(db, id))) throw new AppError(404, 'Account not found');
+      await userRepo.setPassword(db, id, await hashPassword(str(req.body, 'password')));
+      res.json({ ok: true });
+    }),
+  );
+
+  router.delete(
+    '/accounts/:id',
+    asyncHandler(async (req: AuthRequest, res) => {
+      const id = Number(req.params.id);
+      if (req.user!.id === id) throw new AppError(400, 'You cannot delete your own account');
+      const target = await userRepo.findById(db, id);
+      if (!target) {
+        res.status(204).end();
+        return;
+      }
+      if (target.role === 'admin' && (await userRepo.adminCount(db)) <= 1) {
+        throw new AppError(400, 'Cannot delete the last admin');
+      }
+      await userRepo.remove(db, id);
       res.status(204).end();
     }),
   );

@@ -2,8 +2,8 @@
   "app": { "title": "勤怠・交通費システム", "brand": "朝日新聞" },
   "nav": {
     "mypage": "マイページ", "attendance": "勤怠・交通費入力", "export": "月次実績・書類",
-    "stadiums": "球場マスタ", "staff": "アルバイトマスタ", "routes": "区間別交通費", "records": "全体実績",
-    "logout": "ログアウト"
+    "stadiums": "球場マスタ", "staff": "アルバイトマスタ", "accounts": "アカウント管理",
+    "routes": "区間別交通費", "records": "全体実績", "logout": "ログアウト"
   },
   "login": {
     "title": "ログイン", "email": "メールアドレス", "password": "パスワード",
@@ -51,6 +51,12 @@
   "records": {
     "title": "全体実績", "subtitle": "全アルバイトの月次集計", "staff": "アルバイト",
     "workDays": "稼働日数", "salary": "給料", "transport": "交通費", "tax": "所得税", "net": "差引支給額"
+  },
+  "accounts": {
+    "title": "アカウント管理", "subtitle": "アカウントの登録・権限変更・パスワード再設定",
+    "name": "氏名", "email": "メール", "password": "パスワード", "role": "権限",
+    "staff": "アルバイト", "admin": "管理者", "resetPassword": "パスワード再設定",
+    "newPassword": "{{name}} の新しいパスワードを入力", "you": "自分"
   },
   "bucket": { "daikai": "大会経費", "henshu": "編集費" }
 }

@@ -48,7 +48,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not done
 |---|---|---|
 | Stadium master (name, address, nearest station) | ✅ | `StadiumsPage` |
 | Staff master (name, address, station, phone, email) | 🟡 | create + delete + profile edit; no inline edit of name/email yet |
-| Account register/edit (name, email, password, **role**) | 🟡 | staff accounts creatable; admin accounts via seed; no role/password **edit** UI |
+| Account register/edit (name, email, password, **role**) | ✅ | **Accounts** page: create staff/admin, change role, reset password, delete (last-admin + self-delete guards) |
 | Route-fare master (home ⇔ stadium fare & route) | ✅ | `RouteFaresPage` |
 | Review all staff attendance + expenses | ✅ | `RecordsPage` (全体実績) |
 
@@ -57,7 +57,7 @@ Legend: ✅ done · 🟡 partial · ⬜ not done
 |---|---|
 | Login | ✅ |
 | Staff: My Page / Entry / Monthly-export | ✅ |
-| Admin: Stadium / Staff / Route-fare / Review | ✅ |
+| Admin: Stadium / Staff / Accounts / Route-fare / Review | ✅ |
 
 ## Beyond the written UI spec (output fidelity — the differentiator)
 | Item | Status |
@@ -70,17 +70,17 @@ Legend: ✅ done · 🟡 partial · ⬜ not done
 
 ## Honest gaps (all small, none block the demo)
 
-1. **Account management (§3.5)** — the admin can create staff accounts, but creating **admin**
-   accounts and editing a user's **password/role** is not yet in the UI (admins come from the seed).
-   *~30 min to add a role selector + edit form.*
-2. **Staff master inline edit** — currently create + delete + profile update; no edit form for the
+1. **Staff master inline edit** — currently create + delete + profile update; no edit form for the
    core name/email. *Small.*
-3. **My Page daily lists (§3.3)** — present but partly on the Attendance screen; can be mirrored onto
+2. **My Page daily lists (§3.3)** — present but partly on the Attendance screen; can be mirrored onto
    My Page if the client wants that exact layout. *Small.*
-4. **弁当代 (lunch) amount** — a data value the scans didn't make legible; wired as ¥0 until MORABU
+3. **弁当代 (lunch) amount** — a data value the scans didn't make legible; wired as ¥0 until MORABU
    confirms it. *Not a code gap.*
-5. **PDF fonts on Linux deploy** — the local (Windows) demo renders Japanese PDFs fine; a Linux host
+4. **PDF fonts on Linux deploy** — the local (Windows) demo renders Japanese PDFs fine; a Linux host
    (Render) needs a CJK font package (`fonts-noto-cjk`) installed for server-side PDF. *Deploy note.*
+
+*Closed 2026-07-18: account management (§3.5) — the Accounts page now creates staff/admin accounts,
+changes roles, and resets passwords, with last-admin and self-delete guards.*
 
 **Bottom line:** every screen and every core flow in the requirements is built and working, and the
 system additionally reproduces the client's real documents to the yen. The remaining items are minor

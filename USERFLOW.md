@@ -55,6 +55,8 @@ The admin prepares the reference data the staff flow depends on:
 
 - **All Records** (`全体実績`): every staff member's monthly totals — work days, hours, salary,
   transport, tax, net — with a grand total row. Pick any month.
+- **Accounts** (`アカウント管理`): create staff or admin accounts, change a user's role, reset a
+  password, or delete — with guards so the last admin can't be removed and you can't delete yourself.
 - The admin can open any staff member's documents too.
 
 ## Where the money is computed

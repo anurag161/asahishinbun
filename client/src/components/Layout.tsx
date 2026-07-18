@@ -12,6 +12,7 @@ const ADMIN_LINKS = [
   { to: '/admin/records', key: 'nav.records' },
   { to: '/admin/stadiums', key: 'nav.stadiums' },
   { to: '/admin/staff', key: 'nav.staff' },
+  { to: '/admin/accounts', key: 'nav.accounts' },
   { to: '/admin/routes', key: 'nav.routes' },
 ];
 

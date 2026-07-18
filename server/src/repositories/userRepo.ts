@@ -84,6 +84,38 @@ export const userRepo = {
     );
   },
 
+  /** All accounts (both roles) for the account-management screen. */
+  async listAll(db: Db): Promise<PublicUser[]> {
+    const { rows } = await db.query<PublicUser>(
+      `SELECT id, name, email, role FROM users ORDER BY id`,
+    );
+    return rows;
+  },
+
+  async updateAccount(
+    db: Db,
+    id: number,
+    f: { name: string; email: string; role: Role },
+  ): Promise<PublicUser | undefined> {
+    const { rows } = await db.query<PublicUser>(
+      `UPDATE users SET name = $2, email = $3, role = $4
+       WHERE id = $1 RETURNING id, name, email, role`,
+      [id, f.name, f.email, f.role],
+    );
+    return rows[0];
+  },
+
+  async setPassword(db: Db, id: number, passwordHash: string): Promise<void> {
+    await db.query(`UPDATE users SET password_hash = $2 WHERE id = $1`, [id, passwordHash]);
+  },
+
+  async adminCount(db: Db): Promise<number> {
+    const { rows } = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM users WHERE role = 'admin'`,
+    );
+    return rows[0]?.n ?? 0;
+  },
+
   async remove(db: Db, id: number): Promise<void> {
     await db.query(`DELETE FROM users WHERE id = $1`, [id]);
   },
