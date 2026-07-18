@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import type { RecordsResponse } from '../../api/types';
 import { MonthPicker } from '../../components/MonthPicker';
 import { clock, currentMonth, yen } from '../../utils/format';
@@ -9,10 +9,28 @@ export function RecordsPage() {
   const { t } = useTranslation();
   const [month, setMonth] = useState(currentMonth());
   const [data, setData] = useState<RecordsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get<RecordsResponse>(`/api/admin/records?month=${month}`).then(setData);
-  }, [month]);
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    api
+      .get<RecordsResponse>(`/api/admin/records?month=${month}`)
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof ApiError ? e.message : t('common.loadError'));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, t]);
 
   const totals = data?.records.reduce(
     (acc, r) => ({
@@ -33,7 +51,10 @@ export function RecordsPage() {
         <MonthPicker value={month} onChange={setMonth} />
       </div>
 
-      <div className="table-wrap">
+      {error && <div className="banner err">{error}</div>}
+      {loading && <div className="empty-state">{t('common.loading')}</div>}
+
+      <div className="table-wrap" style={{ display: loading ? 'none' : undefined }}>
         <table className="data">
           <thead>
             <tr>

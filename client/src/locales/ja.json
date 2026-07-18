@@ -13,6 +13,7 @@
   "common": {
     "month": "対象月", "save": "保存", "add": "追加", "edit": "編集", "delete": "削除",
     "cancel": "キャンセル", "close": "閉じる", "loading": "読み込み中…", "none": "該当なし",
+    "loadError": "読み込みに失敗しました。サーバーが起動しているか確認してください。", "retry": "再読み込み",
     "yen": "円", "hours": "時間", "days": "日", "actions": "操作", "confirmDelete": "削除しますか？"
   },
   "mypage": {

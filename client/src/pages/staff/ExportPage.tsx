@@ -25,9 +25,9 @@ export function ExportPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    api.get<User>('/api/auth/me').then(setMe);
-    api.get<Capabilities>('/api/capabilities').then(setCaps);
-  }, []);
+    api.get<User>('/api/auth/me').then(setMe).catch(() => notify(t('common.loadError'), 'err'));
+    api.get<Capabilities>('/api/capabilities').then(setCaps).catch(() => {});
+  }, [notify, t]);
 
   async function view(type: DocType) {
     setActive(type);

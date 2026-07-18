@@ -27,11 +27,13 @@ export function AttendancePage() {
     Promise.all([
       api.get<AttendanceRow[]>(`/api/attendance?month=${month}`),
       api.get<ExpenseRow[]>(`/api/expenses?month=${month}`),
-    ]).then(([a, e]) => {
-      setDays(a);
-      setExpenses(e);
-    });
-  }, [month]);
+    ])
+      .then(([a, e]) => {
+        setDays(a);
+        setExpenses(e);
+      })
+      .catch((err) => notify(err instanceof ApiError ? err.message : t('common.loadError'), 'err'));
+  }, [month, notify, t]);
 
   useEffect(() => {
     api.get<Stadium[]>('/api/stadiums').then((s) => {

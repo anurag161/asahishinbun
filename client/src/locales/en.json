@@ -12,6 +12,7 @@
   "common": {
     "month": "Month", "save": "Save", "add": "Add", "edit": "Edit", "delete": "Delete",
     "cancel": "Cancel", "close": "Close", "loading": "Loading…", "none": "No data",
+    "loadError": "Couldn't load. Check that the server is running.", "retry": "Retry",
     "yen": "JPY", "hours": "h", "days": "days", "actions": "Actions", "confirmDelete": "Delete this?"
   },
   "mypage": {

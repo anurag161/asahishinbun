@@ -15,12 +15,11 @@ export function AccountsPage() {
   const [form, setForm] = useState({ ...EMPTY });
 
   const set = (k: keyof typeof EMPTY, v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const reload = () => api.get<User[]>('/api/admin/accounts').then(setList);
-  useEffect(() => { reload(); }, []);
-
   function fail(err: unknown) {
     notify(err instanceof ApiError ? err.message : String(err), 'err');
   }
+  const reload = () => api.get<User[]>('/api/admin/accounts').then(setList).catch(fail);
+  useEffect(() => { reload(); }, []);
 
   async function add(e: FormEvent) {
     e.preventDefault();

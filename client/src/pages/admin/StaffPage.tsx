@@ -13,7 +13,11 @@ export function StaffPage() {
   const [form, setForm] = useState({ ...EMPTY });
 
   const set = (k: keyof typeof EMPTY, v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const reload = () => api.get<StaffMember[]>('/api/admin/staff').then(setList);
+  const reload = () =>
+    api
+      .get<StaffMember[]>('/api/admin/staff')
+      .then(setList)
+      .catch((e) => notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err'));
   useEffect(() => { reload(); }, []);
 
   async function add(e: FormEvent) {

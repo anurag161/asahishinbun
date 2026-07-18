@@ -12,7 +12,11 @@ export function StadiumsPage() {
   const [address, setAddress] = useState('');
   const [station, setStation] = useState('');
 
-  const reload = () => api.get<Stadium[]>('/api/stadiums').then(setList);
+  const reload = () =>
+    api
+      .get<Stadium[]>('/api/stadiums')
+      .then(setList)
+      .catch((e) => notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err'));
   useEffect(() => { reload(); }, []);
 
   async function add(e: FormEvent) {

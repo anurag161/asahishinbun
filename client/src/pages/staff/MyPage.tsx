@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import type { MyPageSummary } from '../../api/types';
 import { MonthPicker } from '../../components/MonthPicker';
 import { clock, currentMonth, yen } from '../../utils/format';
@@ -11,14 +11,27 @@ export function MyPage() {
   const [month, setMonth] = useState(currentMonth());
   const [summary, setSummary] = useState<MyPageSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
+    setError('');
     api
       .get<MyPageSummary>(`/api/mypage/summary?month=${month}`)
-      .then(setSummary)
-      .finally(() => setLoading(false));
-  }, [month]);
+      .then((s) => {
+        if (!cancelled) setSummary(s);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof ApiError ? e.message : t('common.loadError'));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, t]);
 
   return (
     <>
@@ -29,8 +42,12 @@ export function MyPage() {
         <MonthPicker value={month} onChange={setMonth} />
       </div>
 
-      {loading || !summary ? (
+      {loading ? (
         <div className="empty-state">{t('common.loading')}</div>
+      ) : error ? (
+        <div className="banner err">{error}</div>
+      ) : !summary ? (
+        <div className="empty-state">{t('common.none')}</div>
       ) : (
         <>
           <div className="grid cols-4" style={{ marginBottom: 16 }}>

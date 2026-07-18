@@ -15,7 +15,11 @@ export function RouteFaresPage() {
   const [mode, setMode] = useState('');
   const [note, setNote] = useState('');
 
-  const reload = () => api.get<RouteFare[]>('/api/admin/route-fares').then(setList);
+  const reload = () =>
+    api
+      .get<RouteFare[]>('/api/admin/route-fares')
+      .then(setList)
+      .catch((e) => notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err'));
   useEffect(() => { reload(); }, []);
 
   async function add(e: FormEvent) {
