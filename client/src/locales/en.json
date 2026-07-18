@@ -58,5 +58,5 @@
     "staff": "Staff", "admin": "Admin", "resetPassword": "Reset password",
     "newPassword": "New password for {{name}}", "you": "you"
   },
-  "bucket": { "daikai": "Tournament", "henshu": "Editorial" }
+  "bucket": { "daikai": "Tournament (direct)", "henshu": "Editorial (indirect)" }
 }
