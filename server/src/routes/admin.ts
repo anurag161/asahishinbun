@@ -197,6 +197,10 @@ export function adminRouter(db: Db): Router {
   );
 
   // --- 区間別交通費マスタ ---
+  // The route memo (経路メモ) is derived automatically as "出発駅→到着駅";
+  // callers may still pass an explicit routeNote to override it.
+  const deriveRouteNote = (from: string, to: string) => `${from}→${to}`;
+
   router.get(
     '/route-fares',
     asyncHandler(async (_req, res) => {
@@ -209,12 +213,14 @@ export function adminRouter(db: Db): Router {
     asyncHandler(async (req, res) => {
       const fare = int(req.body, 'oneWayFare');
       if (fare < 0) throw new AppError(400, 'oneWayFare must be >= 0');
+      const fromStation = str(req.body, 'fromStation');
+      const toStation = str(req.body, 'toStation');
       const saved = await masterRepo.upsertRouteFare(db, {
-        fromStation: str(req.body, 'fromStation'),
-        toStation: str(req.body, 'toStation'),
+        fromStation,
+        toStation,
         oneWayFare: fare,
         mode: optStr(req.body, 'mode'),
-        routeNote: optStr(req.body, 'routeNote'),
+        routeNote: optStr(req.body, 'routeNote') ?? deriveRouteNote(fromStation, toStation),
       });
       res.status(201).json(saved);
     }),
@@ -240,7 +246,7 @@ export function adminRouter(db: Db): Router {
         toStation,
         oneWayFare: fare,
         mode: optStr(req.body, 'mode'),
-        routeNote: optStr(req.body, 'routeNote'),
+        routeNote: optStr(req.body, 'routeNote') ?? deriveRouteNote(fromStation, toStation),
       });
       res.json(saved);
     }),

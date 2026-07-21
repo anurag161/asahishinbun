@@ -200,6 +200,8 @@ describe('admin masters', () => {
       .send({ fromStation: '円山', toStation: '甲子園', oneWayFare: 2500, mode: '電車' });
     expect(fare.status).toBe(201);
     expect(fare.body.one_way_fare).toBe(2500);
+    // 経路メモ is generated automatically as "出発駅→到着駅" when none is given.
+    expect(fare.body.route_note).toBe('円山→甲子園');
   });
 
   it('admin can update an existing stadium', async () => {

@@ -5,7 +5,10 @@ import type { RouteFare } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { yen } from '../../utils/format';
 
-type EditForm = { fromStation: string; toStation: string; oneWayFare: number; mode: string; routeNote: string };
+type EditForm = { fromStation: string; toStation: string; oneWayFare: number; mode: string };
+
+/** The 経路メモ is generated automatically; keep this in sync with the server. */
+const routeNoteOf = (from: string, to: string) => (from && to ? `${from}→${to}` : '—');
 
 export function RouteFaresPage() {
   const { t } = useTranslation();
@@ -15,9 +18,8 @@ export function RouteFaresPage() {
   const [to, setTo] = useState('');
   const [fare, setFare] = useState(0);
   const [mode, setMode] = useState('');
-  const [note, setNote] = useState('');
   const [editId, setEditId] = useState<number | null>(null);
-  const [edit, setEdit] = useState<EditForm>({ fromStation: '', toStation: '', oneWayFare: 0, mode: '', routeNote: '' });
+  const [edit, setEdit] = useState<EditForm>({ fromStation: '', toStation: '', oneWayFare: 0, mode: '' });
 
   function fail(e: unknown) {
     notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err');
@@ -29,9 +31,9 @@ export function RouteFaresPage() {
     e.preventDefault();
     try {
       await api.post('/api/admin/route-fares', {
-        fromStation: from, toStation: to, oneWayFare: fare, mode, routeNote: note,
+        fromStation: from, toStation: to, oneWayFare: fare, mode,
       });
-      setFrom(''); setTo(''); setFare(0); setMode(''); setNote('');
+      setFrom(''); setTo(''); setFare(0); setMode('');
       notify(t('common.save'));
       reload();
     } catch (err) { fail(err); }
@@ -46,7 +48,6 @@ export function RouteFaresPage() {
       toStation: r.to_station,
       oneWayFare: r.one_way_fare,
       mode: r.mode ?? '',
-      routeNote: r.route_note ?? '',
     });
   }
 
@@ -83,7 +84,7 @@ export function RouteFaresPage() {
           <div className="field" style={{ maxWidth: 140 }}><label>{t('routes.mode')}</label>
             <input value={mode} onChange={(e) => setMode(e.target.value)} /></div>
           <div className="field"><label>{t('routes.note')}</label>
-            <input value={note} onChange={(e) => setNote(e.target.value)} /></div>
+            <input value={routeNoteOf(from, to)} readOnly disabled title={t('routes.noteAuto')} /></div>
           <button className="btn primary" type="submit">{t('common.add')}</button>
         </div>
       </form>
@@ -104,7 +105,7 @@ export function RouteFaresPage() {
                 <td><input value={edit.toStation} onChange={(e) => setEF('toStation', e.target.value)} /></td>
                 <td className="num"><input type="number" min={0} value={edit.oneWayFare} onChange={(e) => setEF('oneWayFare', Number(e.target.value))} style={{ maxWidth: 110 }} /></td>
                 <td><input value={edit.mode} onChange={(e) => setEF('mode', e.target.value)} style={{ maxWidth: 120 }} /></td>
-                <td><input value={edit.routeNote} onChange={(e) => setEF('routeNote', e.target.value)} /></td>
+                <td className="muted">{routeNoteOf(edit.fromStation, edit.toStation)}</td>
                 <td className="num" style={{ whiteSpace: 'nowrap' }}>
                   <button className="btn sm primary" onClick={() => saveEdit(r.id)}>{t('common.save')}</button>{' '}
                   <button className="btn sm" onClick={() => setEditId(null)}>{t('common.cancel')}</button>
