@@ -5,6 +5,8 @@ import type { RouteFare } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { yen } from '../../utils/format';
 
+type EditForm = { fromStation: string; toStation: string; oneWayFare: number; mode: string; routeNote: string };
+
 export function RouteFaresPage() {
   const { t } = useTranslation();
   const { notify } = useToast();
@@ -14,12 +16,13 @@ export function RouteFaresPage() {
   const [fare, setFare] = useState(0);
   const [mode, setMode] = useState('');
   const [note, setNote] = useState('');
+  const [editId, setEditId] = useState<number | null>(null);
+  const [edit, setEdit] = useState<EditForm>({ fromStation: '', toStation: '', oneWayFare: 0, mode: '', routeNote: '' });
 
-  const reload = () =>
-    api
-      .get<RouteFare[]>('/api/admin/route-fares')
-      .then(setList)
-      .catch((e) => notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err'));
+  function fail(e: unknown) {
+    notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err');
+  }
+  const reload = () => api.get<RouteFare[]>('/api/admin/route-fares').then(setList).catch(fail);
   useEffect(() => { reload(); }, []);
 
   async function add(e: FormEvent) {
@@ -31,15 +34,35 @@ export function RouteFaresPage() {
       setFrom(''); setTo(''); setFare(0); setMode(''); setNote('');
       notify(t('common.save'));
       reload();
-    } catch (err) {
-      notify(err instanceof ApiError ? err.message : String(err), 'err');
-    }
+    } catch (err) { fail(err); }
+  }
+
+  const setEF = (k: keyof EditForm, v: string | number) => setEdit((f) => ({ ...f, [k]: v }));
+
+  function startEdit(r: RouteFare) {
+    setEditId(r.id);
+    setEdit({
+      fromStation: r.from_station,
+      toStation: r.to_station,
+      oneWayFare: r.one_way_fare,
+      mode: r.mode ?? '',
+      routeNote: r.route_note ?? '',
+    });
+  }
+
+  async function saveEdit(id: number) {
+    if (!edit.fromStation.trim() || !edit.toStation.trim()) return;
+    try {
+      await api.put(`/api/admin/route-fares/${id}`, edit);
+      setEditId(null);
+      notify(t('common.save'));
+      reload();
+    } catch (err) { fail(err); }
   }
 
   async function remove(id: number) {
     if (!confirm(t('common.confirmDelete'))) return;
-    await api.del(`/api/admin/route-fares/${id}`);
-    reload();
+    try { await api.del(`/api/admin/route-fares/${id}`); reload(); } catch (err) { fail(err); }
   }
 
   return (
@@ -75,12 +98,27 @@ export function RouteFaresPage() {
           <tbody>
             {list.length === 0 ? (
               <tr><td colSpan={6} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
-            ) : list.map((r) => (
+            ) : list.map((r) => editId === r.id ? (
+              <tr key={r.id}>
+                <td><input value={edit.fromStation} onChange={(e) => setEF('fromStation', e.target.value)} /></td>
+                <td><input value={edit.toStation} onChange={(e) => setEF('toStation', e.target.value)} /></td>
+                <td className="num"><input type="number" min={0} value={edit.oneWayFare} onChange={(e) => setEF('oneWayFare', Number(e.target.value))} style={{ maxWidth: 110 }} /></td>
+                <td><input value={edit.mode} onChange={(e) => setEF('mode', e.target.value)} style={{ maxWidth: 120 }} /></td>
+                <td><input value={edit.routeNote} onChange={(e) => setEF('routeNote', e.target.value)} /></td>
+                <td className="num" style={{ whiteSpace: 'nowrap' }}>
+                  <button className="btn sm primary" onClick={() => saveEdit(r.id)}>{t('common.save')}</button>{' '}
+                  <button className="btn sm" onClick={() => setEditId(null)}>{t('common.cancel')}</button>
+                </td>
+              </tr>
+            ) : (
               <tr key={r.id}>
                 <td>{r.from_station}</td><td>{r.to_station}</td>
                 <td className="num">{yen(r.one_way_fare)}</td>
                 <td>{r.mode ?? '—'}</td><td>{r.route_note ?? '—'}</td>
-                <td className="num"><button className="btn sm danger" onClick={() => remove(r.id)}>{t('common.delete')}</button></td>
+                <td className="num" style={{ whiteSpace: 'nowrap' }}>
+                  <button className="btn sm" onClick={() => startEdit(r)}>{t('common.edit')}</button>{' '}
+                  <button className="btn sm danger" onClick={() => remove(r.id)}>{t('common.delete')}</button>
+                </td>
               </tr>
             ))}
           </tbody>

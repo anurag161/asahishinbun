@@ -220,6 +220,32 @@ export function adminRouter(db: Db): Router {
     }),
   );
 
+  router.put(
+    '/route-fares/:id',
+    asyncHandler(async (req, res) => {
+      const id = Number(req.params.id);
+      if (!(await masterRepo.getRouteFare(db, id))) {
+        throw new AppError(404, 'Route fare not found');
+      }
+      const fare = int(req.body, 'oneWayFare');
+      if (fare < 0) throw new AppError(400, 'oneWayFare must be >= 0');
+      const fromStation = str(req.body, 'fromStation');
+      const toStation = str(req.body, 'toStation');
+      const clash = await masterRepo.findRouteFare(db, fromStation, toStation);
+      if (clash && clash.id !== id) {
+        throw new AppError(409, 'A fare for this route already exists');
+      }
+      const saved = await masterRepo.updateRouteFare(db, id, {
+        fromStation,
+        toStation,
+        oneWayFare: fare,
+        mode: optStr(req.body, 'mode'),
+        routeNote: optStr(req.body, 'routeNote'),
+      });
+      res.json(saved);
+    }),
+  );
+
   router.delete(
     '/route-fares/:id',
     asyncHandler(async (req, res) => {

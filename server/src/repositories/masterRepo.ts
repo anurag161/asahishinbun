@@ -68,6 +68,34 @@ export const masterRepo = {
     return rows[0];
   },
 
+  async getRouteFare(db: Db, id: number): Promise<RouteFareRow | undefined> {
+    const { rows } = await db.query<RouteFareRow>(
+      `SELECT * FROM route_fares WHERE id = $1`,
+      [id],
+    );
+    return rows[0];
+  },
+
+  async updateRouteFare(
+    db: Db,
+    id: number,
+    r: {
+      fromStation: string;
+      toStation: string;
+      oneWayFare: number;
+      mode?: string | null;
+      routeNote?: string | null;
+    },
+  ): Promise<RouteFareRow | undefined> {
+    const { rows } = await db.query<RouteFareRow>(
+      `UPDATE route_fares
+         SET from_station = $2, to_station = $3, one_way_fare = $4, mode = $5, route_note = $6
+       WHERE id = $1 RETURNING *`,
+      [id, r.fromStation, r.toStation, r.oneWayFare, r.mode ?? null, r.routeNote ?? null],
+    );
+    return rows[0];
+  },
+
   async upsertRouteFare(
     db: Db,
     r: {

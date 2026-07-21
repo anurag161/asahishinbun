@@ -221,6 +221,32 @@ describe('admin masters', () => {
     expect(list.body.find((s: any) => s.id === id).name).toBe('阪神甲子園球場');
   });
 
+  it('admin can update a route fare, and a duplicate route is rejected', async () => {
+    const a = await request(ctx.app)
+      .post('/api/admin/route-fares')
+      .set(auth(ctx.adminToken))
+      .send({ fromStation: '円山', toStation: '甲子園', oneWayFare: 2500, mode: '電車' });
+    const b = await request(ctx.app)
+      .post('/api/admin/route-fares')
+      .set(auth(ctx.adminToken))
+      .send({ fromStation: '梅田', toStation: '甲子園', oneWayFare: 300, mode: 'バス' });
+
+    const updated = await request(ctx.app)
+      .put(`/api/admin/route-fares/${a.body.id}`)
+      .set(auth(ctx.adminToken))
+      .send({ fromStation: '円山', toStation: '甲子園', oneWayFare: 2800, mode: '新幹線', routeNote: '改定' });
+    expect(updated.status).toBe(200);
+    expect(updated.body.one_way_fare).toBe(2800);
+    expect(updated.body.route_note).toBe('改定');
+
+    // Renaming a's route onto b's (from,to) must 409 on the unique route.
+    const clash = await request(ctx.app)
+      .put(`/api/admin/route-fares/${a.body.id}`)
+      .set(auth(ctx.adminToken))
+      .send({ fromStation: '梅田', toStation: '甲子園', oneWayFare: 2800 });
+    expect(clash.status).toBe(409);
+  });
+
   it('admin can update a staff member’s name and profile', async () => {
     const updated = await request(ctx.app)
       .put(`/api/admin/staff/${ctx.staffId}/profile`)
