@@ -92,7 +92,7 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
         pdfAttached = true;
       }
 
-      const { messageId } = await deps.mailer.send({
+      const { messageId, mode, previewUrl } = await deps.mailer.send({
         to: staff.email,
         subject: `【朝日新聞】${doc.title}`,
         html: doc.html,
@@ -103,7 +103,8 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
         sent: true,
         to: staff.email,
         pdfAttached,
-        delivery: deps.mailer.live ? 'smtp' : 'captured',
+        delivery: mode,
+        previewUrl,
         messageId,
       });
     }),

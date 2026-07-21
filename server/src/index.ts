@@ -31,7 +31,7 @@ async function bootstrap() {
       `  • PDF:   ${pdfAvailable ? 'server-side enabled (Chromium found)' : 'browser Save-as-PDF only (run `npm i puppeteer -w server`)'}`,
     );
     console.log(
-      `  • Email: ${mailer.live ? `SMTP configured (${config.smtp.host})` : 'capture mode — set SMTP_* in .env to send for real'}`,
+      `  • Email: ${mailer.live ? `SMTP configured (${config.smtp.host})` : 'Ethereal preview mode — real send, viewable URL; set SMTP_* in .env for real delivery'}`,
     );
   });
 }

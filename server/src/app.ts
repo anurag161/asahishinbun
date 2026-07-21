@@ -56,7 +56,7 @@ export function createApp(db: Db, deps: AppDeps = {}) {
       const user = await userRepo.findById(db, req.user!.id);
       const to = (req.body?.to as string) || user?.email;
       if (!to) throw new AppError(400, 'No recipient address');
-      const { messageId } = await documentDeps.mailer.send({
+      const { messageId, mode, previewUrl } = await documentDeps.mailer.send({
         to,
         subject: '【テスト】朝日新聞 勤怠・交通費システム',
         html: '<p>SMTP テストメールです。これが届いていれば送信設定は正常です。</p>',
@@ -64,7 +64,8 @@ export function createApp(db: Db, deps: AppDeps = {}) {
       res.json({
         sent: true,
         to,
-        delivery: documentDeps.mailer.live ? 'smtp' : 'captured',
+        delivery: mode,
+        previewUrl,
         messageId,
       });
     }),

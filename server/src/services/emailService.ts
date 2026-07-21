@@ -1,10 +1,15 @@
 /**
  * Email delivery (requirements §3.4 — email the monthly PDF to the staff member).
  *
- * Uses nodemailer. When SMTP isn't configured (dev/test), it falls back to a
- * jsonTransport that captures the message instead of sending — so the flow works
- * end-to-end without credentials. Free options for real sending: Brevo SMTP
- * (300/day) or a Gmail app password.
+ * Three tiers, chosen automatically:
+ *   1. `smtp`     — real credentials in SMTP_* (Brevo 300/day, or a Gmail app
+ *                   password). Delivers to the real inbox.
+ *   2. `ethereal` — no credentials: use Ethereal (https://ethereal.email), a
+ *                   free, no-signup test SMTP. The message is really sent and
+ *                   viewable at a returned preview URL — so the demo "just works"
+ *                   without anyone configuring secrets.
+ *   3. `capture`  — Ethereal unreachable (offline): fall back to capturing the
+ *                   message so the flow still completes.
  */
 
 import nodemailer, { type Transporter } from 'nodemailer';
@@ -23,16 +28,25 @@ export interface EmailMessage {
   attachments?: EmailAttachment[];
 }
 
-export interface Mailer {
-  /** True when a real SMTP transport is configured. */
-  readonly live: boolean;
-  send(message: EmailMessage): Promise<{ messageId: string }>;
+export type DeliveryMode = 'smtp' | 'ethereal' | 'capture';
+
+export interface SendResult {
+  messageId: string;
+  mode: DeliveryMode;
+  /** For `ethereal`: a browser URL to view the sent message. */
+  previewUrl?: string;
 }
 
-function makeTransport(): { transporter: Transporter; live: boolean } {
+export interface Mailer {
+  /** True only when real SMTP credentials are configured (delivers to a real inbox). */
+  readonly live: boolean;
+  send(message: EmailMessage): Promise<SendResult>;
+}
+
+async function makeTransport(): Promise<{ transporter: Transporter; mode: DeliveryMode }> {
   if (config.smtp.user && config.smtp.pass) {
     return {
-      live: true,
+      mode: 'smtp',
       transporter: nodemailer.createTransport({
         host: config.smtp.host,
         port: config.smtp.port,
@@ -41,15 +55,39 @@ function makeTransport(): { transporter: Transporter; live: boolean } {
       }),
     };
   }
-  // No credentials: capture messages instead of sending.
-  return { live: false, transporter: nodemailer.createTransport({ jsonTransport: true }) };
+
+  // No real credentials → Ethereal: a free, no-signup test SMTP that actually
+  // accepts the message and gives back a viewable preview URL.
+  try {
+    const test = await nodemailer.createTestAccount();
+    return {
+      mode: 'ethereal',
+      transporter: nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: { user: test.user, pass: test.pass },
+      }),
+    };
+  } catch {
+    // Offline / Ethereal unreachable: capture instead of sending.
+    return { mode: 'capture', transporter: nodemailer.createTransport({ jsonTransport: true }) };
+  }
 }
 
 export function createMailer(): Mailer {
-  const { transporter, live } = makeTransport();
+  const configured = Boolean(config.smtp.user && config.smtp.pass);
+  // Transport is created lazily on first send (Ethereal setup is async / networked).
+  let ready: Promise<{ transporter: Transporter; mode: DeliveryMode }> | null = null;
+  const init = () => {
+    if (!ready) ready = makeTransport();
+    return ready;
+  };
+
   return {
-    live,
-    async send(message: EmailMessage) {
+    live: configured,
+    async send(message: EmailMessage): Promise<SendResult> {
+      const { transporter, mode } = await init();
       const info = await transporter.sendMail({
         from: config.smtp.from,
         to: message.to,
@@ -57,7 +95,9 @@ export function createMailer(): Mailer {
         html: message.html,
         attachments: message.attachments,
       });
-      return { messageId: String(info.messageId ?? 'captured') };
+      const previewUrl =
+        mode === 'ethereal' ? nodemailer.getTestMessageUrl(info) || undefined : undefined;
+      return { messageId: String(info.messageId ?? 'captured'), mode, previewUrl };
     },
   };
 }

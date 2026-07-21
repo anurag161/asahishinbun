@@ -26,7 +26,7 @@ function stubMailer(): Mailer & { sent: EmailMessage[] } {
     sent,
     async send(message: EmailMessage) {
       sent.push(message);
-      return { messageId: 'stub-1' };
+      return { messageId: 'stub-1', mode: 'capture' as const };
     },
   };
 }
@@ -107,6 +107,24 @@ describe('email flow', () => {
     expect(msg.to).toBe('staff@example.com');
     expect(msg.subject).toContain('給料計算書');
     expect(msg.attachments?.[0]?.contentType).toBe('application/pdf');
+  });
+
+  it('passes the delivery mode and Ethereal preview URL back to the client', async () => {
+    const mailer: Mailer = {
+      live: false,
+      async send() {
+        return { messageId: 'eth-1', mode: 'ethereal', previewUrl: 'https://ethereal.email/message/abc' };
+      },
+    };
+    const ctx = await makeTestContext({ pdf: stubPdf(true), mailer });
+
+    const res = await request(ctx.app)
+      .post(`/api/documents/payslip/${ctx.staffId}/email?month=2026-06`)
+      .set(auth(ctx.staffToken));
+
+    expect(res.status).toBe(200);
+    expect(res.body.delivery).toBe('ethereal');
+    expect(res.body.previewUrl).toBe('https://ethereal.email/message/abc');
   });
 
   it('still emails (HTML only) when PDF is unavailable', async () => {

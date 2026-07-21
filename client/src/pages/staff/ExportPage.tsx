@@ -58,15 +58,18 @@ export function ExportPage() {
 
   async function email(type: DocType) {
     try {
-      const res = await api.post<{ to: string; delivery: string; pdfAttached: boolean }>(
+      const res = await api.post<{ to: string; delivery: string; pdfAttached: boolean; previewUrl?: string }>(
         `/api/documents/${type}/${me!.id}/email?month=${month}`,
       );
-      notify(
-        res.delivery === 'smtp'
-          ? t('export.emailed', { to: res.to })
-          : t('export.emailedCaptured'),
-        res.delivery === 'smtp' ? 'ok' : 'err',
-      );
+      if (res.delivery === 'smtp') {
+        notify(t('export.emailed', { to: res.to }), 'ok');
+      } else if (res.previewUrl) {
+        // Ethereal: the mail really sent — open the viewable preview.
+        window.open(res.previewUrl, '_blank', 'noopener');
+        notify(t('export.emailedPreview', { to: res.to }), 'ok');
+      } else {
+        notify(t('export.emailedCaptured'), 'err');
+      }
     } catch {
       notify('Email failed', 'err');
     }
