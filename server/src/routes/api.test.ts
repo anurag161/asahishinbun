@@ -201,4 +201,37 @@ describe('admin masters', () => {
     expect(fare.status).toBe(201);
     expect(fare.body.one_way_fare).toBe(2500);
   });
+
+  it('admin can update an existing stadium', async () => {
+    const created = await request(ctx.app)
+      .post('/api/stadiums')
+      .set(auth(ctx.adminToken))
+      .send({ name: '甲子園', address: '兵庫県西宮市', nearestStation: '甲子園' });
+    const id = created.body.id;
+
+    const updated = await request(ctx.app)
+      .put(`/api/stadiums/${id}`)
+      .set(auth(ctx.adminToken))
+      .send({ name: '阪神甲子園球場', address: '西宮市甲子園町', nearestStation: '甲子園駅' });
+    expect(updated.status).toBe(200);
+    expect(updated.body.name).toBe('阪神甲子園球場');
+    expect(updated.body.nearest_station).toBe('甲子園駅');
+
+    const list = await request(ctx.app).get('/api/stadiums').set(auth(ctx.adminToken));
+    expect(list.body.find((s: any) => s.id === id).name).toBe('阪神甲子園球場');
+  });
+
+  it('admin can update a staff member’s name and profile', async () => {
+    const updated = await request(ctx.app)
+      .put(`/api/admin/staff/${ctx.staffId}/profile`)
+      .set(auth(ctx.adminToken))
+      .send({ name: '朝日 太郎', homeNearestStation: '梅田', address: '大阪市北区', phone: '090-0000-0000' });
+    expect(updated.status).toBe(200);
+
+    const list = await request(ctx.app).get('/api/admin/staff').set(auth(ctx.adminToken));
+    const row = list.body.find((s: any) => s.id === ctx.staffId);
+    expect(row.name).toBe('朝日 太郎');
+    expect(row.home_nearest_station).toBe('梅田');
+    expect(row.phone).toBe('090-0000-0000');
+  });
 });

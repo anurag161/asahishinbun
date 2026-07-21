@@ -56,6 +56,10 @@ export function adminRouter(db: Db): Router {
       const userId = Number(req.params.id);
       const user = await userRepo.findById(db, userId);
       if (!user || user.role !== 'staff') throw new AppError(404, 'Staff not found');
+      const name = optStr(req.body, 'name');
+      if (name && name !== user.name) {
+        await userRepo.updateName(db, userId, name);
+      }
       await userRepo.upsertProfile(db, {
         userId,
         address: optStr(req.body, 'address'),

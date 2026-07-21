@@ -5,19 +5,22 @@ import type { StaffMember } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 
 const EMPTY = { name: '', email: '', password: '', address: '', homeNearestStation: '', phone: '' };
+type EditForm = { name: string; homeNearestStation: string; address: string; phone: string };
 
 export function StaffPage() {
   const { t } = useTranslation();
   const { notify } = useToast();
   const [list, setList] = useState<StaffMember[]>([]);
   const [form, setForm] = useState({ ...EMPTY });
+  const [editId, setEditId] = useState<number | null>(null);
+  const [edit, setEdit] = useState<EditForm>({ name: '', homeNearestStation: '', address: '', phone: '' });
 
   const set = (k: keyof typeof EMPTY, v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const reload = () =>
-    api
-      .get<StaffMember[]>('/api/admin/staff')
-      .then(setList)
-      .catch((e) => notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err'));
+  const setE = (k: keyof EditForm, v: string) => setEdit((f) => ({ ...f, [k]: v }));
+  function fail(e: unknown) {
+    notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err');
+  }
+  const reload = () => api.get<StaffMember[]>('/api/admin/staff').then(setList).catch(fail);
   useEffect(() => { reload(); }, []);
 
   async function add(e: FormEvent) {
@@ -27,15 +30,32 @@ export function StaffPage() {
       setForm({ ...EMPTY });
       notify(t('common.save'));
       reload();
-    } catch (err) {
-      notify(err instanceof ApiError ? err.message : String(err), 'err');
-    }
+    } catch (err) { fail(err); }
+  }
+
+  function startEdit(s: StaffMember) {
+    setEditId(s.id);
+    setEdit({
+      name: s.name,
+      homeNearestStation: s.home_nearest_station ?? '',
+      address: s.address ?? '',
+      phone: s.phone ?? '',
+    });
+  }
+
+  async function saveEdit(id: number) {
+    if (!edit.name.trim()) return;
+    try {
+      await api.put(`/api/admin/staff/${id}/profile`, edit);
+      setEditId(null);
+      notify(t('common.save'));
+      reload();
+    } catch (err) { fail(err); }
   }
 
   async function remove(id: number) {
     if (!confirm(t('common.confirmDelete'))) return;
-    await api.del(`/api/admin/staff/${id}`);
-    reload();
+    try { await api.del(`/api/admin/staff/${id}`); reload(); } catch (err) { fail(err); }
   }
 
   return (
@@ -66,17 +86,32 @@ export function StaffPage() {
         <table className="data">
           <thead><tr>
             <th>{t('staff.name')}</th><th>{t('staff.email')}</th>
-            <th>{t('staff.homeStation')}</th><th>{t('staff.phone')}</th>
+            <th>{t('staff.homeStation')}</th><th>{t('staff.address')}</th><th>{t('staff.phone')}</th>
             <th className="num">{t('common.actions')}</th>
           </tr></thead>
           <tbody>
             {list.length === 0 ? (
-              <tr><td colSpan={5} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
-            ) : list.map((s) => (
+              <tr><td colSpan={6} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+            ) : list.map((s) => editId === s.id ? (
+              <tr key={s.id}>
+                <td><input value={edit.name} onChange={(e) => setE('name', e.target.value)} /></td>
+                <td className="muted">{s.email}</td>
+                <td><input value={edit.homeNearestStation} onChange={(e) => setE('homeNearestStation', e.target.value)} /></td>
+                <td><input value={edit.address} onChange={(e) => setE('address', e.target.value)} /></td>
+                <td><input value={edit.phone} onChange={(e) => setE('phone', e.target.value)} /></td>
+                <td className="num" style={{ whiteSpace: 'nowrap' }}>
+                  <button className="btn sm primary" onClick={() => saveEdit(s.id)}>{t('common.save')}</button>{' '}
+                  <button className="btn sm" onClick={() => setEditId(null)}>{t('common.cancel')}</button>
+                </td>
+              </tr>
+            ) : (
               <tr key={s.id}>
                 <td>{s.name}</td><td>{s.email}</td>
-                <td>{s.home_nearest_station ?? '—'}</td><td>{s.phone ?? '—'}</td>
-                <td className="num"><button className="btn sm danger" onClick={() => remove(s.id)}>{t('common.delete')}</button></td>
+                <td>{s.home_nearest_station ?? '—'}</td><td>{s.address ?? '—'}</td><td>{s.phone ?? '—'}</td>
+                <td className="num" style={{ whiteSpace: 'nowrap' }}>
+                  <button className="btn sm" onClick={() => startEdit(s)}>{t('common.edit')}</button>{' '}
+                  <button className="btn sm danger" onClick={() => remove(s.id)}>{t('common.delete')}</button>
+                </td>
               </tr>
             ))}
           </tbody>

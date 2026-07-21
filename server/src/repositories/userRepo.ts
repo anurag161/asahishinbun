@@ -92,6 +92,10 @@ export const userRepo = {
     return rows;
   },
 
+  async updateName(db: Db, id: number, name: string): Promise<void> {
+    await db.query(`UPDATE users SET name = $2 WHERE id = $1`, [id, name]);
+  },
+
   async updateAccount(
     db: Db,
     id: number,
