@@ -175,3 +175,46 @@ table.data tr.total td { font-weight: 800; background: var(--surface-2); }
 .login-wrap { display: grid; place-items: center; min-height: 100vh; padding: 20px; }
 .login-card { width: 100%; max-width: 380px; }
 .login-card .brand { font-size: 18px; margin-bottom: 4px; }
+
+/* ------------------------------------------------------------------ */
+/* Mobile — stadium staff enter attendance on their phones.           */
+/* ------------------------------------------------------------------ */
+@media (max-width: 640px) {
+  /* Header wraps to two rows: brand + controls on top, nav scrolls below. */
+  .topbar {
+    flex-wrap: wrap; height: auto; min-height: 54px;
+    padding: 8px 14px; gap: 8px 10px;
+  }
+  .brand { font-size: 14px; }
+  .nav {
+    order: 3; width: 100%; margin-left: 0;
+    flex-wrap: nowrap; overflow-x: auto; gap: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav a { white-space: nowrap; }
+  .topbar .muted { display: none; } /* hide the user name to save room */
+
+  .content { padding: 16px 14px; }
+  .pagehead h1 { font-size: 19px; }
+
+  /* Touch-friendly controls; 16px prevents iOS from zooming on focus. */
+  input, select {
+    font-size: 16px; padding: 11px 12px; min-height: 44px; width: 100%;
+  }
+  .btn { min-height: 44px; }
+
+  /* Form fields each take a full row; the submit button spans the width. */
+  .row { gap: 10px; }
+  .row > .field { min-width: 100%; }
+  .row > .field[style*="max-width"] { max-width: none !important; }
+  .row > .btn { width: 100%; }
+
+  /* Stat tiles read a touch smaller so 4-up wraps cleanly. */
+  .stat .value { font-size: 21px; }
+
+  /* Tables keep their horizontal scroll but flick smoothly. */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+
+  .toast-wrap { left: 12px; right: 12px; bottom: 12px; }
+  .toast { text-align: center; }
+}

@@ -68,8 +68,29 @@ const TAX_BY_RANK: Readonly<Record<number, number>> = {
   114: 181,
 };
 
-/** The largest daily wage the transcribed table can resolve (exclusive). */
+/** Ceiling of the officially-transcribed table (exclusive): rank 114 = [¥14,700, ¥14,800). */
 export const TAX_TABLE_MAX_YEN = 14_800;
+
+/**
+ * Ceiling of the PROVISIONAL extrapolation (exclusive). Above ¥14,800 we continue
+ * the table's own top marginal step (+¥4 per ¥100 bracket) so an unusually long
+ * single day never crashes the flow — but the amount is an ESTIMATE, flagged
+ * `provisional: true`, until the official 令和8年 upper rows are transcribed
+ * (v2plan Q1). Realistic stadium shifts never reach ¥14,800/day (~11.4h at ¥1,300/h),
+ * so this only guards against accidental extreme input. Beyond this ceiling we throw.
+ */
+export const PROVISIONAL_TAX_MAX_YEN = 30_000;
+
+/** Top of the transcribed data: rank 114 → ¥181. The provisional slope continues from here. */
+const LAST_TRANSCRIBED_RANK = 114;
+const LAST_TRANSCRIBED_TAX = 181;
+const PROVISIONAL_STEP_YEN = 4; // the table's own +¥4/bracket step at ranks 110–114
+
+function taxForRank(rank: number): number {
+  if (rank <= LAST_TRANSCRIBED_RANK) return TAX_BY_RANK[rank] ?? 0;
+  // Provisional continuation beyond the transcribed rows.
+  return LAST_TRANSCRIBED_TAX + (rank - LAST_TRANSCRIBED_RANK) * PROVISIONAL_STEP_YEN;
+}
 
 function buildBrackets(): TaxBracket[] {
   const brackets: TaxBracket[] = [];
@@ -77,11 +98,12 @@ function buildBrackets(): TaxBracket[] {
   // Rank 1: everything below ¥3,500 → ¥0.
   brackets.push({ rank: 1, min: 0, max: 3_500, tax: 0 });
 
-  // Ranks 2–114: ¥100-wide brackets starting at ¥3,500.
-  // rank 2 → [3,500, 3,600); rank 71 → [10,400, 10,500); rank 114 → [14,700, 14,800).
-  for (let rank = 2; rank <= 114; rank++) {
+  // Ranks 2–114: transcribed ¥100-wide brackets. Ranks 115+: provisional continuation
+  // up to PROVISIONAL_TAX_MAX_YEN. rank 2 → [3,500, 3,600); rank 114 → [14,700, 14,800).
+  const topRank = 2 + (PROVISIONAL_TAX_MAX_YEN - 3_500) / 100 - 1;
+  for (let rank = 2; rank <= topRank; rank++) {
     const min = 3_500 + (rank - 2) * 100;
-    brackets.push({ rank, min, max: min + 100, tax: TAX_BY_RANK[rank] ?? 0 });
+    brackets.push({ rank, min, max: min + 100, tax: taxForRank(rank) });
   }
 
   return brackets;
@@ -95,13 +117,15 @@ export const TAX_TABLE_REIWA8: TaxTable = {
 
 /**
  * Look up the daily withholding for a daily wage.
- * Returns `{ tax, rank }`. Throws for wages at/above the transcribed table's
- * ceiling — we must NOT silently return ¥0 above ¥14,800 (see v2plan Q1).
+ * Returns `{ tax, rank, provisional }`. `provisional` is true when the wage is at
+ * or above ¥14,800 — the amount then comes from the extrapolation, not the scans,
+ * so callers can flag it (never silently trust ¥0 or an estimate). Throws only for
+ * negatives or wages at/above the provisional ceiling (see v2plan Q1).
  */
 export function lookupDailyTax(
   dailyWageYen: number,
   table: TaxTable = TAX_TABLE_REIWA8,
-): { tax: number; rank: number } {
+): { tax: number; rank: number; provisional: boolean } {
   if (dailyWageYen < 0) {
     throw new RangeError(`Daily wage cannot be negative: ${dailyWageYen}`);
   }
@@ -112,10 +136,14 @@ export function lookupDailyTax(
 
   if (!bracket) {
     throw new RangeError(
-      `Daily wage ¥${dailyWageYen} exceeds the transcribed ${table.year} 丙 table ` +
-        `(max ¥${TAX_TABLE_MAX_YEN}). Extend the table with the official rows (v2plan Q1).`,
+      `Daily wage ¥${dailyWageYen} exceeds the ${table.year} 丙 table's provisional ceiling ` +
+        `(max ¥${PROVISIONAL_TAX_MAX_YEN}). Transcribe the official upper rows (v2plan Q1).`,
     );
   }
 
-  return { tax: bracket.tax, rank: bracket.rank };
+  return {
+    tax: bracket.tax,
+    rank: bracket.rank,
+    provisional: bracket.min >= TAX_TABLE_MAX_YEN,
+  };
 }

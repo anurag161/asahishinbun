@@ -18,7 +18,7 @@ async function bootstrap() {
     db = await createMemoryDb();
     console.log('\n  ⚠  No DATABASE_URL set — running with an IN-MEMORY database.');
     console.log('     Data resets on restart. For a persistent DB, set DATABASE_URL (Neon).');
-    console.log('     Demo logins:  admin@example.com / admin123   ·   staff@example.com / staff123\n');
+    console.log(`     Demo logins:  admin@example.com / admin123   ·   ${config.demoStaffEmail} / staff123\n`);
   }
 
   const mailer = createMailer();

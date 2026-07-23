@@ -1,7 +1,7 @@
 import { pool } from './pool';
 import { config } from '../config';
 import { runMigrations } from './migrate';
-import { seedSampleMonth } from './sampleData';
+import { seedSampleMonth, seedDemoRoster } from './sampleData';
 import { hashPassword } from '../auth/password';
 
 /**
@@ -29,7 +29,9 @@ async function seed() {
   const { staffId } = await seedSampleMonth(pool, {
     adminPasswordHash,
     staffPasswordHash,
+    staffEmail: config.demoStaffEmail,
   });
+  await seedDemoRoster(pool, { staffPasswordHash });
   console.log(`Seeded June 2026 sample month (staff_id=${staffId}).`);
   console.log('Demo login — admin@example.com / admin123 · staff@example.com / staff123');
 }

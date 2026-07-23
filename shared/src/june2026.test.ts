@@ -82,14 +82,20 @@ describe('丙 tax table lookup edge cases', () => {
   });
 
   it('resolves the first taxable bracket: ¥9,800 → rank 65 → ¥1', () => {
-    expect(lookupDailyTax(9_800)).toEqual({ tax: 1, rank: 65 });
+    expect(lookupDailyTax(9_800)).toEqual({ tax: 1, rank: 65, provisional: false });
   });
 
-  it('resolves the top transcribed bracket: ¥14,799 → rank 114 → ¥181', () => {
-    expect(lookupDailyTax(14_799)).toEqual({ tax: 181, rank: 114 });
+  it('resolves the top transcribed bracket: ¥14,799 → rank 114 → ¥181 (not provisional)', () => {
+    expect(lookupDailyTax(14_799)).toEqual({ tax: 181, rank: 114, provisional: false });
   });
 
-  it('throws (never silently ¥0) above the transcribed ceiling', () => {
-    expect(() => lookupDailyTax(14_800)).toThrow(/exceeds/);
+  it('extrapolates provisionally above the transcribed ceiling (flagged, never a silent ¥0)', () => {
+    // ¥14,800 → rank 115 → ¥181 + ¥4 = ¥185, marked provisional until official rows land.
+    expect(lookupDailyTax(14_800)).toEqual({ tax: 185, rank: 115, provisional: true });
+    expect(lookupDailyTax(20_000).provisional).toBe(true);
+  });
+
+  it('still throws for absurd wages above the provisional ceiling', () => {
+    expect(() => lookupDailyTax(30_000)).toThrow(/exceeds/);
   });
 });

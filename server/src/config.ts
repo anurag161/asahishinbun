@@ -34,4 +34,7 @@ export const config = {
     pass: process.env.SMTP_PASS ?? '',
     from: process.env.SMTP_FROM ?? 'Asahi Payroll Demo <noreply@example.com>',
   },
+  // Email for the seeded sample staff member. Set to a real inbox so emailed
+  // documents actually arrive; defaults to the throwaway demo address.
+  demoStaffEmail: process.env.DEMO_STAFF_EMAIL ?? 'staff@example.com',
 };

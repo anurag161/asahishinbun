@@ -10,7 +10,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Db } from './Db';
-import { seedSampleMonth } from './sampleData';
+import { config } from '../config';
+import { seedSampleMonth, seedDemoRoster } from './sampleData';
 import { hashPassword } from '../auth/password';
 
 export async function createMemoryDb(): Promise<Db> {
@@ -32,7 +33,13 @@ export async function createMemoryDb(): Promise<Db> {
     hashPassword('admin123'),
     hashPassword('staff123'),
   ]);
-  await seedSampleMonth(db, { adminPasswordHash, staffPasswordHash });
+  await seedSampleMonth(db, {
+    adminPasswordHash,
+    staffPasswordHash,
+    staffEmail: config.demoStaffEmail,
+  });
+  // Fuller roster so the admin review screen looks like a real operation.
+  await seedDemoRoster(db, { staffPasswordHash });
 
   return db;
 }
