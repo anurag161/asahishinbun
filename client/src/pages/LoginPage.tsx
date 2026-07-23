@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { ApiError } from '../api/client';
+import { api, ApiError } from '../api/client';
 import { setLanguage } from '../i18n';
 
 export function LoginPage() {
@@ -13,6 +13,16 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // The sample-staff login changes when DEMO_STAFF_EMAIL is set, so read the
+  // real address from the server instead of hard-coding a stale hint.
+  const [staffEmail, setStaffEmail] = useState('staff@example.com');
+
+  useEffect(() => {
+    api
+      .get<{ demoStaffEmail?: string }>('/api/capabilities')
+      .then((c) => c.demoStaffEmail && setStaffEmail(c.demoStaffEmail))
+      .catch(() => {});
+  }, []);
 
   if (user) {
     return <Navigate to={user.role === 'admin' ? '/admin/records' : '/mypage'} replace />;
@@ -73,7 +83,7 @@ export function LoginPage() {
         <div className="muted" style={{ fontSize: 12, marginTop: 14 }}>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>{t('login.demo')}</div>
           admin@example.com / admin123<br />
-          staff@example.com / staff123
+          {staffEmail} / staff123
         </div>
 
         <button

@@ -40,10 +40,13 @@ export function createApp(db: Db, deps: AppDeps = {}) {
   });
 
   // What the running server can actually do — the client uses this to guide the UI.
+  // demoStaffEmail lets the login page advertise the real sample-staff login,
+  // which changes when DEMO_STAFF_EMAIL is set.
   app.get('/api/capabilities', async (_req, res) => {
     res.json({
       pdf: await documentDeps.pdf.available(),
       email: documentDeps.mailer.live,
+      demoStaffEmail: config.demoStaffEmail,
     });
   });
 
