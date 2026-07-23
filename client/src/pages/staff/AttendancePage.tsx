@@ -65,11 +65,13 @@ export function AttendancePage() {
         breakTaken,
         breakMinutes: breakTaken ? breakMinutes : 0,
       });
+      // The day is saved either way; only the auto-transport differs. Both are
+      // success toasts — a red one here reads as "add failed", which it didn't.
       notify(
         res.transport.applied
           ? t('attendance.applied', { yen: yen(res.transport.totalYen) })
           : t('attendance.noRoute'),
-        res.transport.applied ? 'ok' : 'err',
+        'ok',
       );
       reload();
     } catch (err) {
