@@ -73,7 +73,13 @@ export function AttendancePage() {
       );
       reload();
     } catch (err) {
-      notify(err instanceof ApiError ? err.message : String(err), 'err');
+      const msg =
+        err instanceof ApiError && err.status === 409
+          ? t('attendance.duplicate', { date })
+          : err instanceof ApiError
+            ? err.message
+            : String(err);
+      notify(msg, 'err');
     } finally {
       setBusy(false);
     }

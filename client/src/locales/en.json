@@ -27,6 +27,7 @@
     "breakTaken": "Break taken", "breakMinutes": "Break (min)", "worked": "Worked",
     "bucket": "Cost bucket", "transportAuto": "Transport (auto)", "addDay": "Add work day",
     "applied": "Auto-applied transport {{yen}}", "noRoute": "No registered route — transport not auto-applied",
+    "duplicate": "A work day for {{date}} is already registered",
     "existing": "Registered days", "expenses": "Transport & expense lines"
   },
   "export": {

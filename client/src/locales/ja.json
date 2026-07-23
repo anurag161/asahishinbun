@@ -28,6 +28,7 @@
     "breakTaken": "休憩あり", "breakMinutes": "休憩（分）", "worked": "実働",
     "bucket": "区分", "transportAuto": "交通費（自動）", "addDay": "勤務日を追加",
     "applied": "交通費 {{yen}} を自動計上しました", "noRoute": "登録区間が無いため交通費は自動計上されません",
+    "duplicate": "{{date}} の勤務日はすでに登録されています",
     "existing": "登録済みの勤務日", "expenses": "交通費・経費明細"
   },
   "export": {
