@@ -30,9 +30,12 @@ const ctx = {
   dayCount: 14,
   rates: DEFAULT_RATES,
   payroll,
+  expenses: JUNE_2026_EXPENSES,
 };
 
-const docs = ['timesheet', 'invoice', 'payslip'].map((t) => renderDocumentHtml(t, ctx));
+const docs = ['timesheet', 'transport', 'allowances', 'invoice', 'payslip'].map((t) =>
+  renderDocumentHtml(t, ctx),
+);
 // Strip each doc's <html> wrapper and stack the .page divs into one preview page.
 const bodies = docs
   .map((html) => {

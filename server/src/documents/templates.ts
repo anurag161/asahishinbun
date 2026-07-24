@@ -1,8 +1,17 @@
-import type { CostBucket, PayrollResult } from '@asahi/shared';
+import type { CostBucket, ExpenseCategory, PayrollResult } from '@asahi/shared';
 import { BUCKET_LABEL } from '@asahi/shared';
 import type { DocumentContext, DocumentType } from './context';
 import { DOCUMENT_TITLE } from './context';
-import { clock, dateLabel, esc, monthLabel, num, yen } from './format';
+import {
+  clock,
+  dateLabel,
+  decimalHours,
+  esc,
+  monthLabel,
+  num,
+  timeOfDay,
+  yen,
+} from './format';
 
 const CSS = `
   * { box-sizing: border-box; }
@@ -27,6 +36,19 @@ const CSS = `
   tr.grand td { background: #eef3fb; font-weight: 800; font-size: 13px; }
   .section-title { font-weight: 700; margin: 14px 0 6px; padding-left: 6px;
     border-left: 4px solid #3366aa; }
+  /* 勤務表: 17 columns (two 8-column blocks + 備考) must fit A4 portrait, as on the paper form. */
+  table.timesheet { table-layout: fixed; font-size: 9px; }
+  table.timesheet td { padding: 2px 1px; text-align: center; white-space: nowrap; }
+  table.timesheet th { padding: 2px 1px; font-size: 8.5px; line-height: 1.25; }
+  table.timesheet td.num { text-align: center; }
+  table.timesheet tbody tr { height: 15px; }
+  table.timesheet thead tr:first-child th { font-size: 11px; letter-spacing: 1px; }
+  table.summary { width: auto; min-width: 60%; }
+  table.summary td { padding: 4px 10px; }
+  /* 別紙 (交通費 / 出張日当ほか): amounts are printed with a trailing 円 as on the form. */
+  table.fares .fare { display: flex; justify-content: flex-end; gap: 10px; }
+  table.fares .unit { color: #444; }
+  table.fares td.arrow { width: 26px; color: #444; }
   .empty { color: #999; font-style: italic; padding: 8px; }
   .footer { margin-top: 16px; color: #666; font-size: 11px; text-align: right; }
   @page { size: A4; margin: 10mm; }
@@ -51,36 +73,129 @@ function metaTable(ctx: DocumentContext): string {
 }
 
 // --- 勤務表 (timesheet) ---
-function bucketTable(payroll: PayrollResult, bucket: CostBucket): string {
+/**
+ * The paper 勤務表 is one grid split into two blocks side by side — 大会経費（直接費）
+ * on the left, 編集費（間接費）on the right — each with the same eight columns, plus a
+ * shared 備考 column at the far right. Rows in the two blocks are independent: day 3
+ * of the direct block does not line up with day 3 of the indirect block.
+ */
+const TIMESHEET_COLUMNS = [
+  '日付',
+  '始業時刻',
+  '終業時刻',
+  '休憩時間',
+  '実働時間<br>（除休憩）',
+  '時間外<br>勤務時間',
+  '夜勤',
+  '弁当代<br>有無',
+] as const;
+
+interface BucketBlock {
+  bucket: CostBucket;
+  days: PayrollResult['days'];
+  workedMinutes: number;
+  overtimeMinutes: number;
+  nightMinutes: number;
+  dayCount: number;
+}
+
+function bucketBlock(payroll: PayrollResult, bucket: CostBucket): BucketBlock {
   const days = payroll.days.filter((d) => d.bucket === bucket);
-  const subtotalMin = days.reduce((s, d) => s + d.workedMinutes, 0);
+  const sum = (f: (d: PayrollResult['days'][number]) => number) =>
+    days.reduce((s, d) => s + f(d), 0);
+  return {
+    bucket,
+    days,
+    workedMinutes: sum((d) => d.workedMinutes),
+    overtimeMinutes: sum((d) => d.overtimeMinutes),
+    nightMinutes: sum((d) => d.nightMinutes),
+    dayCount: days.length,
+  };
+}
 
-  const rows = days.length
-    ? days
-        .map(
-          (d) => `<tr>
-        <td class="center">${dateLabel(d.date)}</td>
-        <td class="num">${clock(d.workedMinutes)}</td>
-        <td class="num">${d.overtimeWageYen ? clock(0) : '—'}</td>
-        <td class="num">${d.nightWageYen ? '有' : '—'}</td>
-        <td class="num">${d.lunchYen ? '有' : '—'}</td>
-        <td class="num">${yen(d.dailyWageYen)}</td>
-      </tr>`,
-        )
-        .join('')
-    : `<tr><td colspan="6" class="empty">該当なし</td></tr>`;
+/** The eight cells of one day inside one block (blank cells when the block has no such row). */
+function dayCells(day: PayrollResult['days'][number] | undefined): string {
+  if (!day) return '<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>';
+  return `<td class="center">${dateLabel(day.date)}</td>
+    <td class="num">${timeOfDay(day.startMinutes)}</td>
+    <td class="num">${timeOfDay(day.endMinutes)}</td>
+    <td class="num">${day.breakMinutes ? clock(day.breakMinutes) : ''}</td>
+    <td class="num">${clock(day.workedMinutes)}</td>
+    <td class="num">${day.overtimeMinutes ? clock(day.overtimeMinutes) : ''}</td>
+    <td class="num">${day.nightMinutes ? clock(day.nightMinutes) : ''}</td>
+    <td class="center">${day.lunchYen ? '有' : ''}</td>`;
+}
 
-  return `<div class="section-title">${BUCKET_LABEL[bucket]}</div>
-    <table class="grid">
-      <thead><tr>
-        <th>日付</th><th>実働時間</th><th>時間外</th><th>深夜</th><th>弁当代</th><th>日額</th>
-      </tr></thead>
-      <tbody>${rows}
-        <tr class="total"><td class="center">合計</td>
-          <td class="num">${clock(subtotalMin)}</td>
-          <td colspan="4"></td></tr>
-      </tbody>
-    </table>`;
+function totalCells(block: BucketBlock): string {
+  const label = block.bucket === 'daikai' ? '直接費' : '間接費';
+  // An unused block stays blank on the paper form rather than printing 0:00.
+  return `<td class="center" colspan="4">${label}　合　計</td>
+    <td class="num">${block.dayCount ? clock(block.workedMinutes) : ''}</td>
+    <td class="num">${block.overtimeMinutes ? clock(block.overtimeMinutes) : ''}</td>
+    <td class="num">${block.nightMinutes ? clock(block.nightMinutes) : ''}</td>
+    <td></td>`;
+}
+
+function timesheetGrid(payroll: PayrollResult): string {
+  const left = bucketBlock(payroll, 'daikai');
+  const right = bucketBlock(payroll, 'henshu');
+  const rowCount = Math.max(left.days.length, right.days.length);
+
+  const rows =
+    rowCount === 0
+      ? `<tr><td colspan="17" class="empty">該当なし</td></tr>`
+      : Array.from({ length: rowCount }, (_, i) => {
+          const noteCell = i === 0 ? `<td rowspan="${rowCount}"></td>` : '';
+          return `<tr>${dayCells(left.days[i])}${dayCells(right.days[i])}${noteCell}</tr>`;
+        }).join('');
+
+  const headCells = TIMESHEET_COLUMNS.map((c) => `<th>${c}</th>`).join('');
+  // Column widths as a share of the sheet: each block is 47.5%, 備考 takes the last 5%.
+  const blockCols = [9.5, 5.7, 5.7, 5.2, 7.1, 5.7, 4.3, 4.3]
+    .map((w) => `<col style="width:${w}%">`)
+    .join('');
+
+  return `<table class="grid timesheet">
+    <colgroup>${blockCols}${blockCols}<col style="width:5%"></colgroup>
+    <thead>
+      <tr>
+        <th colspan="8">${BUCKET_LABEL.daikai}</th>
+        <th colspan="8">${BUCKET_LABEL.henshu}</th>
+        <th rowspan="2">備　考</th>
+      </tr>
+      <tr>${headCells}${headCells}</tr>
+    </thead>
+    <tbody>${rows}
+      <tr class="total">${totalCells(left)}${totalCells(right)}<td></td></tr>
+    </tbody>
+  </table>`;
+}
+
+/** 日数 / 時給換算用勤務時間 — the boxes printed under each block on the paper form. */
+function timesheetFooter(ctx: DocumentContext): string {
+  const left = bucketBlock(ctx.payroll, 'daikai');
+  const right = bucketBlock(ctx.payroll, 'henshu');
+  const row = (block: BucketBlock) => {
+    const label = block.bucket === 'daikai' ? '直接費' : '間接費';
+    return `<tr>
+      <td class="center">${label}</td>
+      <td>時給換算用勤務時間</td>
+      <td class="num">${block.dayCount ? decimalHours(block.workedMinutes) : ''}</td>
+      <td class="center">日数</td>
+      <td class="num">${block.dayCount ? `${block.dayCount}日` : ''}</td>
+    </tr>`;
+  };
+
+  return `<table class="grid summary"><tbody>
+    ${row(left)}
+    ${row(right)}
+    <tr class="grand">
+      <td class="center" colspan="2">総合計（実働）</td>
+      <td class="num">${clock(ctx.payroll.workedMinutesTotal)}</td>
+      <td class="center">日数</td>
+      <td class="num">${ctx.dayCount}日</td>
+    </tr>
+  </tbody></table>`;
 }
 
 export function buildTimesheetHtml(ctx: DocumentContext): string {
@@ -88,15 +203,159 @@ export function buildTimesheetHtml(ctx: DocumentContext): string {
     <h1>${DOCUMENT_TITLE.timesheet}</h1>
     <p class="subtitle">${monthLabel(ctx.month)}　高校野球　※弁当代の支給は大会期間中かつ1日の労働時間が6時間を超える場合に限る</p>
     ${metaTable(ctx)}
-    ${bucketTable(ctx.payroll, 'daikai')}
-    ${bucketTable(ctx.payroll, 'henshu')}
-    <table class="grid"><tbody>
-      <tr class="grand"><td class="center">総合計（実働）</td>
-        <td class="num">${clock(ctx.payroll.workedMinutesTotal)}</td>
-        <td class="center">日数</td><td class="num">${ctx.dayCount}日</td></tr>
-    </tbody></table>
+    ${timesheetGrid(ctx.payroll)}
+    ${timesheetFooter(ctx)}
     <p class="footer">朝日新聞総合サービス株式会社</p>`;
   return htmlShell(`${DOCUMENT_TITLE.timesheet} ${monthLabel(ctx.month)}`, body);
+}
+
+// --- 交通費 (別紙) ---
+/** '2026-06-03' → '6月3日' — the date form used on the 別紙 sheets. */
+function jaDate(isoDate: string): string {
+  const [, m, d] = isoDate.split('-').map(Number);
+  return `${m}月${d}日`;
+}
+
+interface Leg {
+  from: string;
+  to: string;
+  mode: string;
+}
+
+/**
+ * Auto transport lines are described as `円山 → 大阪（バス、電車）` (transportService),
+ * which the sheet splits into 区間明細（片道）and 交通手段. A manual line with free-text
+ * description falls back to putting the whole text in the 区間 column.
+ */
+function parseLeg(description: string | undefined): Leg {
+  const text = (description ?? '').trim();
+  const match = /^(.+?)\s*(?:→|⇒|->)\s*([^（(]+?)\s*(?:[（(](.+?)[）)])?$/.exec(text);
+  if (!match) return { from: text, to: '', mode: '' };
+  return { from: match[1]!.trim(), to: match[2]!.trim(), mode: (match[3] ?? '').trim() };
+}
+
+/** One fare cell: the amount right-aligned against a 円 flush to the cell edge, as on the form. */
+function fareCell(amountYen: number | null): string {
+  return `<td class="num"><span class="fare">
+    <span>${amountYen ? num(amountYen) : ''}</span><span class="unit">円</span>
+  </span></td>`;
+}
+
+/** Cell pair for the 直接費 / 間接費 fare columns — an amount lands in its own bucket. */
+function bucketAmountCells(bucket: CostBucket, amountYen: number): string {
+  return `${fareCell(bucket === 'daikai' ? amountYen : null)}${fareCell(
+    bucket === 'henshu' ? amountYen : null,
+  )}`;
+}
+
+function bucketTotalCells(lines: { bucket: CostBucket; amountYen: number }[]): string {
+  const total = (b: CostBucket) =>
+    lines.filter((l) => l.bucket === b).reduce((s, l) => s + l.amountYen, 0);
+  return `${fareCell(total('daikai') || null)}${fareCell(total('henshu') || null)}`;
+}
+
+export function buildTransportHtml(ctx: DocumentContext): string {
+  const lines = ctx.expenses
+    .filter((e) => e.category === 'transport')
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const rows = lines.length
+    ? lines
+        .map((l) => {
+          const leg = parseLeg(l.description);
+          return `<tr>
+            <td class="center">${esc(jaDate(l.date))}</td>
+            <td class="center">${esc(leg.from)}</td>
+            <td class="center arrow">⇒</td>
+            <td class="center">${esc(leg.to)}</td>
+            <td class="center">${esc(leg.mode)}</td>
+            ${bucketAmountCells(l.bucket, l.amountYen)}
+          </tr>`;
+        })
+        .join('')
+    : `<tr><td colspan="7" class="empty">該当なし</td></tr>`;
+
+  const body = `
+    <h1>${monthLabel(ctx.month)}　${DOCUMENT_TITLE.transport}</h1>
+    <p class="subtitle">交通費（別紙）　※片道ごとに1行（往復は2行）</p>
+    ${metaTable(ctx)}
+    <table class="grid fares">
+      <thead>
+        <tr>
+          <th rowspan="2">日付</th>
+          <th rowspan="2" colspan="3">区間明細（片道）</th>
+          <th rowspan="2">交通手段<br>（電車・バス・私有車）</th>
+          <th>${BUCKET_LABEL.daikai}</th>
+          <th>${BUCKET_LABEL.henshu}</th>
+        </tr>
+        <tr><th>料　金</th><th>料　金</th></tr>
+      </thead>
+      <tbody>${rows}
+        <tr class="total">
+          <td class="center" colspan="5">合　計</td>
+          ${bucketTotalCells(lines)}
+        </tr>
+      </tbody>
+    </table>
+    <p class="footer">朝日新聞総合サービス株式会社</p>`;
+  return htmlShell(`${DOCUMENT_TITLE.transport} ${monthLabel(ctx.month)}`, body);
+}
+
+// --- 出張日当 / 私有携帯電話使用料 / その他 (別紙) ---
+const ALLOWANCE_SECTIONS: { title: string; categories: ExpenseCategory[] }[] = [
+  { title: '出張日当', categories: ['perdiem'] },
+  { title: '私有携帯電話使用料', categories: ['phone'] },
+  { title: 'その他（宿泊実費etc.）', categories: ['lodging', 'other'] },
+];
+
+function allowanceSection(
+  ctx: DocumentContext,
+  section: { title: string; categories: ExpenseCategory[] },
+): string {
+  const lines = ctx.expenses
+    .filter((e) => section.categories.includes(e.category))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const rows = lines.length
+    ? lines
+        .map(
+          (l) => `<tr>
+            <td class="center">${esc(jaDate(l.date))}</td>
+            <td>${esc(l.description ?? '')}</td>
+            ${bucketAmountCells(l.bucket, l.amountYen)}
+          </tr>`,
+        )
+        .join('')
+    : `<tr><td colspan="4" class="empty">該当なし</td></tr>`;
+
+  return `<div class="section-title">◆${section.title}</div>
+    <table class="grid fares">
+      <thead>
+        <tr>
+          <th rowspan="2" style="width:16%">日付</th>
+          <th rowspan="2">摘　要</th>
+          <th>${BUCKET_LABEL.daikai}</th>
+          <th>${BUCKET_LABEL.henshu}</th>
+        </tr>
+        <tr><th style="width:20%">料　金</th><th style="width:20%">料　金</th></tr>
+      </thead>
+      <tbody>${rows}
+        <tr class="total">
+          <td class="center" colspan="2">合　計</td>
+          ${bucketTotalCells(lines)}
+        </tr>
+      </tbody>
+    </table>`;
+}
+
+export function buildAllowancesHtml(ctx: DocumentContext): string {
+  const body = `
+    <h1>${monthLabel(ctx.month)}</h1>
+    <p class="subtitle">出張日当・私有携帯電話使用料・その他（別紙）</p>
+    ${metaTable(ctx)}
+    ${ALLOWANCE_SECTIONS.map((s) => allowanceSection(ctx, s)).join('')}
+    <p class="footer">朝日新聞総合サービス株式会社</p>`;
+  return htmlShell(`${DOCUMENT_TITLE.allowances} ${monthLabel(ctx.month)}`, body);
 }
 
 // --- 請求明細書 (invoice) ---
@@ -203,6 +462,10 @@ export function renderDocumentHtml(type: DocumentType, ctx: DocumentContext): st
   switch (type) {
     case 'timesheet':
       return buildTimesheetHtml(ctx);
+    case 'transport':
+      return buildTransportHtml(ctx);
+    case 'allowances':
+      return buildAllowancesHtml(ctx);
     case 'invoice':
       return buildInvoiceHtml(ctx);
     case 'payslip':

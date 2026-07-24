@@ -25,7 +25,7 @@
   "attendance": {
     "title": "勤怠・交通費入力", "subtitle": "日別の勤務内容を入力します",
     "date": "勤務日", "stadium": "球場", "start": "始業", "end": "終業",
-    "breakTaken": "休憩あり", "breakMinutes": "休憩（分）", "worked": "実働",
+    "breakTaken": "休憩あり", "breakMinutes": "休憩（分）", "break": "休憩", "worked": "実働",
     "bucket": "区分", "transportAuto": "交通費（自動）", "addDay": "勤務日を追加",
     "applied": "交通費 {{yen}} を自動計上しました", "noRoute": "勤務日を追加しました（登録区間が無いため交通費は未計上）",
     "duplicate": "{{date}} の勤務日はすでに登録されています",
@@ -33,7 +33,9 @@
   },
   "export": {
     "title": "月次実績・書類", "subtitle": "書類を確認・PDF保存・メール送信できます",
-    "timesheet": "勤務表", "invoice": "請求明細書", "payslip": "給料計算書",
+    "timesheet": "勤務表", "transport": "交通費（別紙）",
+    "allowances": "出張日当・私有携帯・その他（別紙）",
+    "invoice": "請求明細書", "payslip": "給料計算書",
     "view": "表示", "pdf": "PDF", "email": "メール送信", "emailed": "{{to}} に送信しました",
     "emailedPreview": "{{to}} に送信しました — プレビューを開きます…",
     "emailedCaptured": "送信をシミュレートしました（SMTP未設定）", "print": "印刷 / PDF保存",

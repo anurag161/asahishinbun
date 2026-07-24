@@ -24,7 +24,7 @@
   "attendance": {
     "title": "Attendance & Expenses", "subtitle": "Enter your daily work records",
     "date": "Date", "stadium": "Stadium", "start": "Start", "end": "End",
-    "breakTaken": "Break taken", "breakMinutes": "Break (min)", "worked": "Worked",
+    "breakTaken": "Break taken", "breakMinutes": "Break (min)", "break": "Break", "worked": "Worked",
     "bucket": "Cost bucket", "transportAuto": "Transport (auto)", "addDay": "Add work day",
     "applied": "Auto-applied transport {{yen}}", "noRoute": "Work day added (no registered route, so transport wasn't auto-applied)",
     "duplicate": "A work day for {{date}} is already registered",
@@ -32,7 +32,9 @@
   },
   "export": {
     "title": "Monthly / Documents", "subtitle": "View, save as PDF, or email documents",
-    "timesheet": "Timesheet", "invoice": "Invoice", "payslip": "Payslip",
+    "timesheet": "Timesheet", "transport": "Transport (attachment)",
+    "allowances": "Per-diem / phone / other (attachment)",
+    "invoice": "Invoice", "payslip": "Payslip",
     "view": "View", "pdf": "PDF", "email": "Email", "emailed": "Sent to {{to}}",
     "emailedPreview": "Sent to {{to}} — opening the email preview…",
     "emailedCaptured": "Send simulated (no SMTP configured)", "print": "Print / Save as PDF",

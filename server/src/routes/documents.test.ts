@@ -58,6 +58,34 @@ describe('document HTML reproduces the client figures', () => {
     expect(res.text).toContain('¥185,340');
   });
 
+  it('交通費 (別紙) lists one row per one-way leg and totals ¥54,040', async () => {
+    const res = await request(ctx.app)
+      .get(`/api/documents/transport/${ctx.staffId}?month=2026-06`)
+      .set(auth(ctx.staffToken));
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('交通費');
+    expect(res.text).toContain('区間明細（片道）');
+    // 14 work days × 2 legs, each ¥1,930 → 28 rows summing to ¥54,040.
+    expect(res.text.match(/⇒/g)).toHaveLength(28);
+    expect(res.text.match(/1,930/g)).toHaveLength(28);
+    expect(res.text).toContain('54,040');
+    // The auto description 円山 → 大阪（バス・電車）splits into 区間 + 交通手段.
+    expect(res.text).toContain('円山');
+    expect(res.text).toContain('バス・電車');
+  });
+
+  it('出張日当/私有携帯/その他 (別紙) renders all three sections', async () => {
+    const res = await request(ctx.app)
+      .get(`/api/documents/allowances/${ctx.staffId}?month=2026-06`)
+      .set(auth(ctx.staffToken));
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('出張日当');
+    expect(res.text).toContain('私有携帯電話使用料');
+    expect(res.text).toContain('その他（宿泊実費etc.）');
+    // The June sample has no such lines — each section prints 該当なし, not a wrong figure.
+    expect(res.text.match(/該当なし/g)).toHaveLength(3);
+  });
+
   it('timesheet shows the 101:00 total', async () => {
     const res = await request(ctx.app)
       .get(`/api/documents/timesheet/${ctx.staffId}?month=2026-06`)

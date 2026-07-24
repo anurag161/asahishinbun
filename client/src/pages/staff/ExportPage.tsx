@@ -6,8 +6,8 @@ import { useToast } from '../../context/ToastContext';
 import { MonthPicker } from '../../components/MonthPicker';
 import { currentMonth } from '../../utils/format';
 
-type DocType = 'timesheet' | 'invoice' | 'payslip';
-const DOC_TYPES: DocType[] = ['timesheet', 'invoice', 'payslip'];
+type DocType = 'timesheet' | 'transport' | 'allowances' | 'invoice' | 'payslip';
+const DOC_TYPES: DocType[] = ['timesheet', 'transport', 'allowances', 'invoice', 'payslip'];
 
 interface Capabilities {
   pdf: boolean;

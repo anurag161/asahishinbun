@@ -3,7 +3,12 @@
  * money: load the month's rows, map them, and hand off to computePayroll.
  */
 
-import { computePayroll, DEFAULT_RATES, type PayrollResult } from '@asahi/shared';
+import {
+  computePayroll,
+  DEFAULT_RATES,
+  type ExpenseLine,
+  type PayrollResult,
+} from '@asahi/shared';
 import type { Db } from '../db/Db';
 import { attendanceRepo } from '../repositories/attendanceRepo';
 import { expenseRepo } from '../repositories/expenseRepo';
@@ -19,6 +24,8 @@ export interface MonthPayroll {
   month: string;
   workDays: number;
   result: PayrollResult;
+  /** The mapped expense lines that fed the result — the 別紙 sheets print them individually. */
+  expenses: ExpenseLine[];
 }
 
 export async function computeForStaffMonth(
@@ -33,11 +40,10 @@ export async function computeForStaffMonth(
   ]);
 
   const rates = rateRow ? rateRowToConfig(rateRow) : DEFAULT_RATES;
-  const result = computePayroll(
-    attendanceRows.map(attendanceRowToDay),
-    expenseRows.map(expenseRowToLine),
-    { rates },
-  );
+  const expenses = expenseRows.map(expenseRowToLine);
+  const result = computePayroll(attendanceRows.map(attendanceRowToDay), expenses, {
+    rates,
+  });
 
-  return { staffId, month, workDays: attendanceRows.length, result };
+  return { staffId, month, workDays: attendanceRows.length, result, expenses };
 }
