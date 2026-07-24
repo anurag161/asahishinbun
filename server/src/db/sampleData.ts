@@ -150,8 +150,6 @@ interface RosterStaff {
   phone: string;
   /** Index into DEMO_STADIUMS. */
   stadium: number;
-  /** One-way fare home ⇄ stadium (¥). */
-  fareYen: number;
   bucket: 'daikai' | 'henshu';
   tournament: boolean;
   shift: RosterShift;
@@ -162,40 +160,85 @@ const DEMO_STADIUMS = [
   { name: '明治神宮野球場', address: '東京都新宿区霞ヶ丘町3-1', station: '千駄ケ谷' },
 ];
 
+/**
+ * One-way fare (¥) for EVERY home station × EVERY stadium station in the demo.
+ *
+ * Auto-transport only fires when the exact home ⇄ stadium pair is registered, so
+ * seeding just each person's own commute leaves a dead end: assign anyone to a
+ * different stadium and their transport silently comes out zero. Registering the
+ * full matrix means any staff/stadium combination a demo takes produces a fare.
+ * The pairs that already existed keep their original figures (円山⇄大阪 ¥1,930 is
+ * the golden-master value); the cross-region ones are plausible demo values.
+ */
+const FARE_MATRIX: Record<string, Record<string, number>> = {
+  円山: { 大阪: 1_930, 甲子園: 2_110, 千駄ケ谷: 1_780 },
+  西宮: { 大阪: 270, 甲子園: 320, 千駄ケ谷: 14_000 },
+  三宮: { 大阪: 420, 甲子園: 280, 千駄ケ谷: 14_700 },
+  尼崎: { 大阪: 220, 甲子園: 180, 千駄ケ谷: 14_200 },
+  新宿: { 大阪: 14_200, 甲子園: 14_500, 千駄ケ谷: 200 },
+  渋谷: { 大阪: 14_300, 甲子園: 14_600, 千駄ケ谷: 170 },
+  四ツ谷: { 大阪: 14_100, 甲子園: 14_400, 千駄ケ谷: 160 },
+};
+
+function fareFor(homeStation: string, stadiumStation: string): number {
+  const fare = FARE_MATRIX[homeStation]?.[stadiumStation];
+  if (fare === undefined) {
+    throw new Error(`No demo fare registered for ${homeStation} → ${stadiumStation}`);
+  }
+  return fare;
+}
+
+/**
+ * Register every pair in FARE_MATRIX, both directions. Idempotent — the sample
+ * month has already inserted 円山 ⇄ 大阪, which is left as it is.
+ */
+export async function seedRouteFareMatrix(db: Queryable): Promise<void> {
+  for (const [home, fares] of Object.entries(FARE_MATRIX)) {
+    for (const [stadium, fare] of Object.entries(fares)) {
+      await db.query(
+        `INSERT INTO route_fares (from_station, to_station, one_way_fare, mode, route_note)
+         VALUES ($1, $2, $3, $4, $5), ($2, $1, $3, $4, $6)
+         ON CONFLICT (from_station, to_station) DO NOTHING`,
+        [home, stadium, fare, 'バス・電車', `${home}→${stadium}`, `${stadium}→${home}`],
+      );
+    }
+  }
+}
+
 const DEMO_ROSTER: RosterStaff[] = [
   {
     name: '田中 花子', email: 'tanaka.hanako@example.com', homeStation: '西宮',
-    address: '兵庫県西宮市今津', phone: '090-1111-0001', stadium: 0, fareYen: 320,
+    address: '兵庫県西宮市今津', phone: '090-1111-0001', stadium: 0,
     bucket: 'daikai', tournament: true,
     shift: { days: [1, 2, 4, 5, 8, 9, 11, 12, 15, 16, 18, 19], start: '09:00', end: '18:00', breakMin: 60 },
   },
   {
     name: '佐藤 健', email: 'sato.ken@example.com', homeStation: '三宮',
-    address: '兵庫県神戸市中央区', phone: '090-1111-0002', stadium: 0, fareYen: 280,
+    address: '兵庫県神戸市中央区', phone: '090-1111-0002', stadium: 0,
     bucket: 'henshu', tournament: false,
     shift: { days: [3, 5, 9, 10, 12, 17, 19, 24, 26], start: '10:00', end: '19:00', breakMin: 60 },
   },
   {
     name: '鈴木 一郎', email: 'suzuki.ichiro@example.com', homeStation: '尼崎',
-    address: '兵庫県尼崎市', phone: '090-1111-0003', stadium: 0, fareYen: 180,
+    address: '兵庫県尼崎市', phone: '090-1111-0003', stadium: 0,
     bucket: 'daikai', tournament: true,
     shift: { days: [1, 4, 8, 10, 15, 17, 22, 24, 29, 30], start: '12:00', end: '21:00', breakMin: 60 },
   },
   {
     name: '高橋 美咲', email: 'takahashi.misaki@example.com', homeStation: '新宿',
-    address: '東京都新宿区', phone: '090-2222-0004', stadium: 1, fareYen: 200,
+    address: '東京都新宿区', phone: '090-2222-0004', stadium: 1,
     bucket: 'henshu', tournament: false,
     shift: { days: [2, 5, 9, 12, 16, 23, 25, 30], start: '09:30', end: '18:30', breakMin: 60 },
   },
   {
     name: '伊藤 大輔', email: 'ito.daisuke@example.com', homeStation: '渋谷',
-    address: '東京都渋谷区', phone: '090-2222-0005', stadium: 1, fareYen: 170,
+    address: '東京都渋谷区', phone: '090-2222-0005', stadium: 1,
     bucket: 'daikai', tournament: true,
     shift: { days: [1, 3, 8, 10, 15, 18, 22, 24, 26, 29, 30], start: '08:00', end: '17:00', breakMin: 60 },
   },
   {
     name: '渡辺 さやか', email: 'watanabe.sayaka@example.com', homeStation: '四ツ谷',
-    address: '東京都新宿区四谷', phone: '090-2222-0006', stadium: 1, fareYen: 160,
+    address: '東京都新宿区四谷', phone: '090-2222-0006', stadium: 1,
     bucket: 'henshu', tournament: false,
     shift: { days: [4, 11, 18, 19, 25, 26, 29], start: '10:00', end: '18:00', breakMin: 60 },
   },
@@ -229,9 +272,14 @@ export async function seedDemoRoster(
     stadiumIds.push(row.rows[0].id as number);
   }
 
+  // Every home ⇄ stadium pair, so auto-transport works for any combination the
+  // demo takes — not only each person's own commute.
+  await seedRouteFareMatrix(db);
+
   for (const person of DEMO_ROSTER) {
     const stadium = DEMO_STADIUMS[person.stadium]!;
     const stadiumId = stadiumIds[person.stadium]!;
+    const fareYen = fareFor(person.homeStation, stadium.station);
 
     const user = await db.query(
       `INSERT INTO users (name, email, password_hash, role)
@@ -244,16 +292,6 @@ export async function seedDemoRoster(
       `INSERT INTO staff_profiles (user_id, address, home_nearest_station, phone)
        VALUES ($1, $2, $3, $4)`,
       [userId, person.address, person.homeStation, person.phone],
-    );
-
-    // Route fare, both directions: home ⇄ stadium station.
-    await db.query(
-      `INSERT INTO route_fares (from_station, to_station, one_way_fare, mode, route_note)
-       VALUES ($1, $2, $3, $4, $5), ($2, $1, $3, $4, $6)`,
-      [
-        person.homeStation, stadium.station, person.fareYen, 'バス・電車',
-        `${person.homeStation}→${stadium.station}`, `${stadium.station}→${person.homeStation}`,
-      ],
     );
 
     const startMin = toMinutes(person.shift.start);
@@ -277,7 +315,7 @@ export async function seedDemoRoster(
            (staff_id, expense_date, category, bucket, amount_yen, description, source)
          VALUES ($1, $2, 'transport', $3, $4, $5, 'auto'), ($1, $2, 'transport', $3, $4, $6, 'auto')`,
         [
-          userId, date, person.bucket, person.fareYen,
+          userId, date, person.bucket, fareYen,
           `${person.homeStation} → ${stadium.station}（バス・電車）`,
           `${stadium.station} → ${person.homeStation}（バス・電車）`,
         ],
