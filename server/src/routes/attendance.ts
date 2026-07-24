@@ -21,6 +21,10 @@ function parseBody(body: Record<string, unknown>, staffId: number): AttendanceIn
     throw new AppError(400, 'Worked time cannot be negative (check start/end/break).');
   }
 
+  // 弁当代有無 (○/×). Only valid above 6 worked hours; the client only offers it
+  // then, and the engine ignores it below the threshold, so accept it as declared.
+  const lunchAllowance = bool(body, 'lunchAllowance', false);
+
   return {
     staffId,
     workDate: str(body, 'date'),
@@ -29,6 +33,7 @@ function parseBody(body: Record<string, unknown>, staffId: number): AttendanceIn
     endMinutes,
     breakTaken,
     breakMinutes,
+    lunchAllowance,
     bucket: oneOf(body, 'bucket', COST_BUCKETS, 'henshu'),
     overtimeMinutes: body.overtimeMinutes == null ? 0 : int(body, 'overtimeMinutes'),
     nightMinutes: body.nightMinutes == null ? 0 : int(body, 'nightMinutes'),

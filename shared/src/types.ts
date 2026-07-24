@@ -69,6 +69,13 @@ export interface AttendanceDay {
   endMinutes: number;
   /** 休憩時間 — self-reported break, minutes (0 if no break taken). */
   breakMinutes: number;
+  /**
+   * 弁当代有無 — the staff's ○/× declaration that the lunch allowance applies this
+   * day. Only meaningful when worked > 6h (the engine still enforces that gate);
+   * the client only offers it above 6h. This is a flag, not a duration — lunch is
+   * NOT deducted from worked time.
+   */
+  lunchAllowance?: boolean;
   /** 時間外勤務時間 — overtime minutes for the day (default 0; not staff-entered). */
   overtimeMinutes?: number;
   /** 深夜割増分 — night-premium minutes, 22:00 以降 (default 0). */
@@ -112,6 +119,8 @@ export interface DayComputation {
   overtimeWageYen: number;
   nightWageYen: number;
   lunchYen: number;
+  /** 弁当代有無 — true when lunch qualified (declared ○ AND worked > 6h). Drives the 有/無 column. */
+  lunchProvided: boolean;
   /** Taxable wage for the day = base + overtime + night + lunch. */
   dailyWageYen: number;
   /** 税額ランク — matched bracket rank. */

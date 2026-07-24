@@ -89,9 +89,12 @@ export function computePayroll(
     const nightMinutes = day.nightMinutes ?? 0;
     const nightWageYen = wageForMinutes(nightMinutes, rates.nightYen);
 
-    // Lunch: only during the tournament AND when the day exceeds 6 worked hours.
-    const lunchYen =
-      day.tournament && workedMinutes > LUNCH_MIN_WORKED_MINUTES ? rates.lunchYen : 0;
+    // 弁当代: the staff's ○/× declaration (lunchAllowance), still gated on the
+    // day exceeding 6 worked hours. Falls back to the legacy `tournament` flag for
+    // any caller that predates lunchAllowance (the sample fixtures set neither).
+    const lunchDeclared = (day.lunchAllowance ?? day.tournament) ?? false;
+    const lunchProvided = lunchDeclared && workedMinutes > LUNCH_MIN_WORKED_MINUTES;
+    const lunchYen = lunchProvided ? rates.lunchYen : 0;
 
     const dailyWageYen = baseWageYen + overtimeWageYen + nightWageYen + lunchYen;
 
@@ -115,6 +118,7 @@ export function computePayroll(
       overtimeWageYen,
       nightWageYen,
       lunchYen,
+      lunchProvided,
       dailyWageYen,
       taxRank,
       dailyTaxYen,

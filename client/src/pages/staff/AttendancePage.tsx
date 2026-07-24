@@ -19,8 +19,11 @@ export function AttendancePage() {
   const [stadiumId, setStadiumId] = useState<number | ''>('');
   const [start, setStart] = useState('10:00');
   const [end, setEnd] = useState('19:00');
+  // Break is entered in HOURS (e.g. 1 or 0.5); stored as minutes.
   const [breakTaken, setBreakTaken] = useState(true);
-  const [breakMinutes, setBreakMinutes] = useState(60);
+  const [breakHours, setBreakHours] = useState(1);
+  // 弁当代有無 — a ○/× the staff can only pick when the day exceeds 6 worked hours.
+  const [lunchAllowance, setLunchAllowance] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const reload = useCallback(() => {
@@ -63,7 +66,8 @@ export function AttendancePage() {
         startMinutes: s,
         endMinutes: en,
         breakTaken,
-        breakMinutes: breakTaken ? breakMinutes : 0,
+        breakMinutes: breakTaken ? Math.round(breakHours * 60) : 0,
+        lunchAllowance: lunchEligible && lunchAllowance,
       });
       // The day is saved either way; only the auto-transport differs. Both are
       // success toasts — a red one here reads as "add failed", which it didn't.
@@ -96,6 +100,16 @@ export function AttendancePage() {
   const stadiumName = (id: number) => stadiums.find((s) => s.id === id)?.name ?? `#${id}`;
   const worked = (d: AttendanceRow) =>
     d.end_minutes - d.start_minutes - (d.break_taken ? d.break_minutes : 0);
+
+  // 弁当代 is offered only when the day exceeds 6 worked hours (勤務表 note). Compute
+  // that live from the form so the ○/× disables the moment the day drops to ≤6h.
+  const formStart = parseTime(start);
+  const formEnd = parseTime(end);
+  const formWorkedMin =
+    formStart !== null && formEnd !== null
+      ? formEnd - formStart - (breakTaken ? Math.round(breakHours * 60) : 0)
+      : 0;
+  const lunchEligible = formWorkedMin > 6 * 60;
 
   return (
     <>
@@ -142,16 +156,34 @@ export function AttendancePage() {
               <input
                 type="number"
                 min={0}
-                value={breakMinutes}
+                step={0.25}
+                value={breakHours}
                 disabled={!breakTaken}
-                onChange={(e) => setBreakMinutes(Number(e.target.value))}
+                onChange={(e) => setBreakHours(Number(e.target.value))}
               />
             </div>
+          </div>
+          <div className="field" style={{ maxWidth: 120 }}>
+            <label>{t('attendance.lunch')}</label>
+            <select
+              value={lunchEligible && lunchAllowance ? 'yes' : 'no'}
+              disabled={!lunchEligible}
+              onChange={(e) => setLunchAllowance(e.target.value === 'yes')}
+              title={lunchEligible ? '' : t('attendance.lunchIneligible')}
+            >
+              <option value="yes">{t('attendance.lunchYes')}</option>
+              <option value="no">{t('attendance.lunchNo')}</option>
+            </select>
           </div>
           <button className="btn primary" type="submit" disabled={busy || stadiums.length === 0}>
             {t('attendance.addDay')}
           </button>
         </div>
+        {!lunchEligible && (
+          <p className="muted" style={{ fontSize: 12, margin: '10px 2px 0' }}>
+            {t('attendance.lunchIneligible')}
+          </p>
+        )}
       </form>
 
       <h2 style={{ margin: '4px 0 10px' }}>{t('attendance.existing')}</h2>

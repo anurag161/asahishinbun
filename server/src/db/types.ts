@@ -46,6 +46,7 @@ export interface AttendanceRow {
   end_minutes: number;
   break_taken: boolean;
   break_minutes: number;
+  lunch_allowance: boolean;
   bucket: CostBucket;
   overtime_minutes: number;
   night_minutes: number;

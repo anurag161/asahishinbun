@@ -14,6 +14,7 @@ export function attendanceRowToDay(row: AttendanceRow): AttendanceDay {
     startMinutes: row.start_minutes,
     endMinutes: row.end_minutes,
     breakMinutes: row.break_taken ? row.break_minutes : 0,
+    lunchAllowance: row.lunch_allowance,
     overtimeMinutes: row.overtime_minutes,
     nightMinutes: row.night_minutes,
     tournament: row.tournament,

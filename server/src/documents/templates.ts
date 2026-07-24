@@ -123,7 +123,7 @@ function dayCells(day: PayrollResult['days'][number] | undefined): string {
     <td class="num">${clock(day.workedMinutes)}</td>
     <td class="num">${day.overtimeMinutes ? clock(day.overtimeMinutes) : ''}</td>
     <td class="num">${day.nightMinutes ? clock(day.nightMinutes) : ''}</td>
-    <td class="center">${day.lunchYen ? '有' : ''}</td>`;
+    <td class="center">${day.lunchProvided ? '有' : ''}</td>`;
 }
 
 function totalCells(block: BucketBlock): string {

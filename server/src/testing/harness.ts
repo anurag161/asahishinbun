@@ -26,11 +26,12 @@ export async function makeTestContext(deps: AppDeps = {}): Promise<TestContext> 
   const pool = new Pool();
   const db: Db = { query: (sql: string, params?: unknown[]) => pool.query(sql, params) };
 
-  const sql = fs.readFileSync(
-    path.join(__dirname, '..', 'db', 'migrations', '001_initial_schema.sql'),
-    'utf8',
-  );
-  await db.query(sql);
+  // Apply every migration in order (mirrors migrate.ts / memoryDb) so the schema
+  // under test always matches production — not just the initial 001.
+  const dir = path.join(__dirname, '..', 'db', 'migrations');
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
+    await db.query(fs.readFileSync(path.join(dir, file), 'utf8'));
+  }
 
   const [adminPasswordHash, staffPasswordHash] = await Promise.all([
     hashPassword('admin123'),

@@ -24,7 +24,9 @@
   "attendance": {
     "title": "Attendance & Expenses", "subtitle": "Enter your daily work records",
     "date": "Date", "stadium": "Stadium", "start": "Start", "end": "End",
-    "breakTaken": "Break taken", "breakMinutes": "Break (min)", "break": "Break", "worked": "Worked",
+    "breakTaken": "Break taken", "breakMinutes": "Break (hrs)", "break": "Break",
+    "lunch": "Lunch allowance", "lunchYes": "○ (yes)", "lunchNo": "× (no)",
+    "lunchIneligible": "Not eligible (worked ≤ 6h)", "worked": "Worked",
     "bucket": "Cost bucket", "transportAuto": "Transport (auto)", "addDay": "Add work day",
     "applied": "Auto-applied transport {{yen}}", "noRoute": "Work day added (no registered route, so transport wasn't auto-applied)",
     "duplicate": "A work day for {{date}} is already registered",

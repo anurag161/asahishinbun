@@ -11,6 +11,7 @@ export interface AttendanceInput {
   endMinutes: number;
   breakTaken: boolean;
   breakMinutes: number;
+  lunchAllowance: boolean;
   bucket: CostBucket;
   overtimeMinutes: number;
   nightMinutes: number;
@@ -49,8 +50,9 @@ export const attendanceRepo = {
     const { rows } = await db.query<AttendanceRow>(
       `INSERT INTO attendance
          (staff_id, work_date, stadium_id, start_minutes, end_minutes,
-          break_taken, break_minutes, bucket, overtime_minutes, night_minutes, tournament)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          break_taken, break_minutes, lunch_allowance,
+          bucket, overtime_minutes, night_minutes, tournament)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
       [
         a.staffId,
@@ -60,6 +62,7 @@ export const attendanceRepo = {
         a.endMinutes,
         a.breakTaken,
         a.breakMinutes,
+        a.lunchAllowance,
         a.bucket,
         a.overtimeMinutes,
         a.nightMinutes,
@@ -73,8 +76,8 @@ export const attendanceRepo = {
     const { rows } = await db.query<AttendanceRow>(
       `UPDATE attendance SET
          work_date = $2, stadium_id = $3, start_minutes = $4, end_minutes = $5,
-         break_taken = $6, break_minutes = $7, bucket = $8,
-         overtime_minutes = $9, night_minutes = $10, tournament = $11
+         break_taken = $6, break_minutes = $7, lunch_allowance = $8,
+         bucket = $9, overtime_minutes = $10, night_minutes = $11, tournament = $12
        WHERE id = $1
        RETURNING *`,
       [
@@ -85,6 +88,7 @@ export const attendanceRepo = {
         a.endMinutes,
         a.breakTaken,
         a.breakMinutes,
+        a.lunchAllowance,
         a.bucket,
         a.overtimeMinutes,
         a.nightMinutes,
