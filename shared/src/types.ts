@@ -86,10 +86,27 @@ export interface ExpenseLine {
   description?: string;
 }
 
-/** Per-day computed output. */
+/**
+ * Per-day computed output.
+ *
+ * The staff-entered clock fields (始業/終業/休憩) are carried through unchanged —
+ * the 勤務表 prints them column-for-column, so the documents must not have to go
+ * back to the raw attendance rows to render a timesheet.
+ */
 export interface DayComputation {
   date: string;
   bucket: CostBucket;
+  /** 始業時刻 — minutes from midnight (as entered). */
+  startMinutes: number;
+  /** 終業時刻 — minutes from midnight (as entered). */
+  endMinutes: number;
+  /** 休憩時間 — minutes (as entered). */
+  breakMinutes: number;
+  /** 時間外勤務時間 — minutes (as entered; 0 when none). */
+  overtimeMinutes: number;
+  /** 深夜割増分 — minutes (as entered; 0 when none). */
+  nightMinutes: number;
+  /** 実働時間（除休憩） = end − start − break. */
   workedMinutes: number;
   baseWageYen: number;
   overtimeWageYen: number;

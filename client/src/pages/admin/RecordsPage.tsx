@@ -5,7 +5,7 @@ import type { AttendanceRow, RecordsResponse, Stadium } from '../../api/types';
 import type { CostBucket } from '@asahi/shared';
 import { useToast } from '../../context/ToastContext';
 import { MonthPicker } from '../../components/MonthPicker';
-import { clock, currentMonth, yen } from '../../utils/format';
+import { clock, currentMonth, timeOfDay, yen } from '../../utils/format';
 
 const BUCKETS: CostBucket[] = ['henshu', 'daikai'];
 
@@ -134,18 +134,24 @@ export function RecordsPage() {
                 <tr>
                   <th>{t('attendance.date')}</th>
                   <th>{t('attendance.stadium')}</th>
+                  <th className="num">{t('attendance.start')}</th>
+                  <th className="num">{t('attendance.end')}</th>
+                  <th className="num">{t('attendance.break')}</th>
                   <th className="num">{t('attendance.worked')}</th>
                   <th>{t('attendance.bucket')}</th>
                 </tr>
               </thead>
               <tbody>
                 {days.length === 0 ? (
-                  <tr><td colSpan={4} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+                  <tr><td colSpan={7} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
                 ) : (
                   days.map((d) => (
                     <tr key={d.id}>
                       <td>{d.work_date}</td>
                       <td>{stadiumName(d.stadium_id)}</td>
+                      <td className="num">{timeOfDay(d.start_minutes)}</td>
+                      <td className="num">{timeOfDay(d.end_minutes)}</td>
+                      <td className="num">{d.break_taken && d.break_minutes ? clock(d.break_minutes) : '—'}</td>
                       <td className="num">{clock(worked(d))}</td>
                       <td>
                         <select

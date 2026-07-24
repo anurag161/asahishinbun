@@ -105,6 +105,11 @@ export function computePayroll(
     days.push({
       date: day.date,
       bucket: day.bucket,
+      startMinutes: day.startMinutes,
+      endMinutes: day.endMinutes,
+      breakMinutes: day.breakMinutes,
+      overtimeMinutes: otMinutes,
+      nightMinutes,
       workedMinutes,
       baseWageYen,
       overtimeWageYen,

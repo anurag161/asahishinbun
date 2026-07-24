@@ -19,6 +19,19 @@ export function clock(minutes: number): string {
   return `${h}:${String(m).padStart(2, '0')}`;
 }
 
+/** minutes-from-midnight → "HH:MM" (e.g. 600 → "10:00") — 始業/終業時刻 */
+export function timeOfDay(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/** minutes → decimal hours as printed in 時給換算用勤務時間 (6060 → "101", 6090 → "101.5") */
+export function decimalHours(minutes: number): string {
+  const hours = Math.round((minutes / 60) * 100) / 100;
+  return String(hours);
+}
+
 function isLeap(y: number): boolean {
   return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 }

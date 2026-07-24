@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../../api/client';
 import type { MyPageSummary } from '../../api/types';
 import { MonthPicker } from '../../components/MonthPicker';
-import { clock, currentMonth, yen } from '../../utils/format';
+import { clock, currentMonth, timeOfDay, yen } from '../../utils/format';
 
 export function MyPage() {
   const { t } = useTranslation();
@@ -92,6 +92,9 @@ export function MyPage() {
               <thead>
                 <tr>
                   <th>{t('attendance.date')}</th>
+                  <th className="num">{t('attendance.start')}</th>
+                  <th className="num">{t('attendance.end')}</th>
+                  <th className="num">{t('attendance.break')}</th>
                   <th className="num">{t('attendance.worked')}</th>
                   <th className="num">{t('mypage.salary')}</th>
                   <th className="num">{t('mypage.tax')}</th>
@@ -100,11 +103,14 @@ export function MyPage() {
               </thead>
               <tbody>
                 {summary.days.length === 0 ? (
-                  <tr><td colSpan={5} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+                  <tr><td colSpan={8} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
                 ) : (
                   summary.days.map((d) => (
                     <tr key={d.date}>
                       <td>{d.date}</td>
+                      <td className="num">{timeOfDay(d.startMinutes)}</td>
+                      <td className="num">{timeOfDay(d.endMinutes)}</td>
+                      <td className="num">{d.breakMinutes ? clock(d.breakMinutes) : '—'}</td>
                       <td className="num">{clock(d.workedMinutes)}</td>
                       <td className="num">{yen(d.dailyWageYen)}</td>
                       <td className="num">{yen(d.dailyTaxYen)}</td>
