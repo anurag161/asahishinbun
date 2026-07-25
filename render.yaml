@@ -1,0 +1,36 @@
+# Render Blueprint — one free web service serves the API and the built client.
+#
+# Deploy: Render dashboard → New → Blueprint → pick this repo. Render reads this
+# file, so there are no build/start/env fields to fill in by hand.
+#
+# Runs in DEMO mode: no DATABASE_URL, so the server boots an in-memory Postgres
+# seeded with the June 2026 sample and opens correct-to-the-yen. Data resets when
+# the service restarts (Render free spins down after ~15 min idle; the first
+# request back takes ~30s to wake). For a persistent database, create a Neon
+# project and add DATABASE_URL in the Render dashboard — see DEPLOYMENT.md §B.
+services:
+  - type: web
+    name: asahi-attendance
+    runtime: node
+    plan: free
+    # --include=dev is required: NODE_ENV=production below would otherwise make
+    # npm skip devDependencies, and tsc/vite (the build itself) live there.
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render generates a strong secret once and keeps it across deploys.
+      - key: JWT_SECRET
+        generateValue: true
+      # Same-origin (the server serves client/dist), so CORS points at itself.
+      - key: CLIENT_URL
+        fromService:
+          type: web
+          name: asahi-attendance
+          envVarKey: RENDER_EXTERNAL_URL
+      # Puppeteer's default cache (~/.cache) is not carried from build to runtime
+      # on Render; pin it inside the project so server-side PDF keeps working.
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/src/.cache/puppeteer

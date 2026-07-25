@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.13",
     "pg": "^8.11.5",
+    "pg-mem": "^3.0.5",
     "puppeteer": "^25.3.0"
   },
   "devDependencies": {
@@ -32,7 +33,6 @@
     "@types/nodemailer": "^6.4.15",
     "@types/pg": "^8.11.5",
     "@types/supertest": "^6.0.2",
-    "pg-mem": "^3.0.5",
     "supertest": "^7.0.0",
     "tsx": "^4.16.0",
     "typescript": "^5.4.0",
