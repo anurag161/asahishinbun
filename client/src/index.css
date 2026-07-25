@@ -127,6 +127,18 @@ h3 { font-size: 15px; }
 .btn.sm { padding: 5px 10px; font-size: 12px; }
 .btn-pdf:hover { background: var(--good); border-color: var(--good); color: #fff; }
 
+/* Icon-only buttons (pencil = edit, trash = delete). Square so a row of them
+   aligns, and the label lives in aria-label/title rather than on screen. */
+.btn.icon {
+  padding: 0; width: 32px; height: 32px; flex: 0 0 auto;
+  color: var(--text-muted);
+}
+.btn.icon:hover { color: var(--text); }
+.btn.icon.danger { color: var(--danger); }
+.btn.icon.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+/* Actions cell: keep the pair together and hard against the column edge. */
+.row-actions { display: inline-flex; gap: 6px; justify-content: flex-end; }
+
 /* Forms */
 .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
 .field label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
@@ -148,6 +160,14 @@ table.data th { background: var(--surface-2); font-weight: 700; color: var(--tex
 table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
 table.data tr:last-child td { border-bottom: none; }
 table.data tr.total td { font-weight: 800; background: var(--surface-2); }
+/* Inline row editing: keep the controls compact, otherwise an open edit row is
+   wider than the read-only rows and pushes the action buttons out of view. */
+table.data td input, table.data td select {
+  padding: 5px 8px; font-size: 13px; max-width: 100%;
+}
+table.data td input[type="date"] { width: 148px; }
+table.data td input[type="time"] { width: 106px; }
+table.data td select { max-width: 172px; }
 
 /* Bits */
 .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
@@ -202,6 +222,8 @@ table.data tr.total td { font-weight: 800; background: var(--surface-2); }
     font-size: 16px; padding: 11px 12px; min-height: 44px; width: 100%;
   }
   .btn { min-height: 44px; }
+  /* Icon buttons stay square, but grow to a 44px touch target. */
+  .btn.icon { width: 44px; height: 44px; }
 
   /* Form fields each take a full row; the submit button spans the width. */
   .row { gap: 10px; }

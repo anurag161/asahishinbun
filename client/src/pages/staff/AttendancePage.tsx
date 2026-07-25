@@ -4,7 +4,11 @@ import { api, ApiError } from '../../api/client';
 import type { AttendanceRow, ExpenseRow, Stadium, TransportResult } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { MonthPicker } from '../../components/MonthPicker';
+import { PencilIcon, TrashIcon } from '../../components/icons';
 import { clock, currentMonth, parseTime, timeOfDay, yen } from '../../utils/format';
+
+/** The four fields a staff member can correct in-place on a saved day. */
+type EditForm = { date: string; stadiumId: number; start: string; end: string };
 
 export function AttendancePage() {
   const { t } = useTranslation();
@@ -25,6 +29,10 @@ export function AttendancePage() {
   // 弁当代有無 — a ○/× the staff can only pick when the day exceeds 6 worked hours.
   const [lunchAllowance, setLunchAllowance] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Inline row editing (pencil). null = no row open for edit.
+  const [editId, setEditId] = useState<number | null>(null);
+  const [edit, setEdit] = useState<EditForm>({ date: '', stadiumId: 0, start: '', end: '' });
 
   const reload = useCallback(() => {
     Promise.all([
@@ -95,6 +103,63 @@ export function AttendancePage() {
     if (!confirm(t('common.confirmDelete'))) return;
     await api.del(`/api/attendance/${id}`);
     reload();
+  }
+
+  function startEdit(d: AttendanceRow) {
+    setEditId(d.id);
+    setEdit({
+      date: d.work_date,
+      stadiumId: d.stadium_id,
+      start: timeOfDay(d.start_minutes),
+      end: timeOfDay(d.end_minutes),
+    });
+  }
+
+  async function saveEdit(row: AttendanceRow) {
+    const s = parseTime(edit.start);
+    const en = parseTime(edit.end);
+    if (s === null || en === null) {
+      notify('Invalid time', 'err');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await api.put<{ transport: TransportResult }>(`/api/attendance/${row.id}`, {
+        date: edit.date,
+        stadiumId: edit.stadiumId,
+        startMinutes: s,
+        endMinutes: en,
+        // Carry the row's other fields through untouched. The server re-parses the
+        // whole body and defaults anything missing — omitting these would silently
+        // reset the break, the 弁当代 flag and the admin's 区分 re-tagging.
+        breakTaken: row.break_taken,
+        breakMinutes: row.break_minutes,
+        lunchAllowance: row.lunch_allowance,
+        bucket: row.bucket,
+        overtimeMinutes: row.overtime_minutes,
+        nightMinutes: row.night_minutes,
+        tournament: row.tournament,
+      });
+      setEditId(null);
+      // Moving a day re-runs auto transport, same as adding one.
+      notify(
+        res.transport.applied
+          ? t('attendance.applied', { yen: yen(res.transport.totalYen) })
+          : t('attendance.noRoute'),
+        'ok',
+      );
+      reload();
+    } catch (err) {
+      const msg =
+        err instanceof ApiError && err.status === 409
+          ? t('attendance.duplicate', { date: edit.date })
+          : err instanceof ApiError
+            ? err.message
+            : String(err);
+      notify(msg, 'err');
+    } finally {
+      setBusy(false);
+    }
   }
 
   const stadiumName = (id: number) => stadiums.find((s) => s.id === id)?.name ?? `#${id}`;
@@ -204,7 +269,41 @@ export function AttendancePage() {
             {days.length === 0 ? (
               <tr><td colSpan={7} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
             ) : (
-              days.map((d) => (
+              days.map((d) => editId === d.id ? (
+                <tr key={d.id}>
+                  <td>
+                    <input type="date" value={edit.date}
+                      onChange={(e) => setEdit((f) => ({ ...f, date: e.target.value }))} />
+                  </td>
+                  <td>
+                    <select value={edit.stadiumId}
+                      onChange={(e) => setEdit((f) => ({ ...f, stadiumId: Number(e.target.value) }))}>
+                      {stadiums.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <input type="time" value={edit.start}
+                      onChange={(e) => setEdit((f) => ({ ...f, start: e.target.value }))} />
+                  </td>
+                  <td>
+                    <input type="time" value={edit.end}
+                      onChange={(e) => setEdit((f) => ({ ...f, end: e.target.value }))} />
+                  </td>
+                  {/* Worked time and 区分 are derived/admin-owned, so they stay read-only. */}
+                  <td className="num">{clock(worked(d))}</td>
+                  <td><span className={`pill ${d.bucket}`}>{t(`bucket.${d.bucket}`)}</span></td>
+                  <td className="num">
+                    <span className="row-actions">
+                      <button className="btn sm primary" disabled={busy}
+                        onClick={() => saveEdit(d)}>{t('common.save')}</button>
+                      <button className="btn sm" disabled={busy}
+                        onClick={() => setEditId(null)}>{t('common.cancel')}</button>
+                    </span>
+                  </td>
+                </tr>
+              ) : (
                 <tr key={d.id}>
                   <td>{d.work_date}</td>
                   <td>{stadiumName(d.stadium_id)}</td>
@@ -213,7 +312,24 @@ export function AttendancePage() {
                   <td className="num">{clock(worked(d))}</td>
                   <td><span className={`pill ${d.bucket}`}>{t(`bucket.${d.bucket}`)}</span></td>
                   <td className="num">
-                    <button className="btn sm danger" onClick={() => removeDay(d.id)}>{t('common.delete')}</button>
+                    <span className="row-actions">
+                      <button
+                        className="btn sm icon"
+                        onClick={() => startEdit(d)}
+                        aria-label={t('common.edit')}
+                        title={t('common.edit')}
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        className="btn sm icon danger"
+                        onClick={() => removeDay(d.id)}
+                        aria-label={t('common.delete')}
+                        title={t('common.delete')}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </span>
                   </td>
                 </tr>
               ))
