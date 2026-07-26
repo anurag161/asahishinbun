@@ -9,6 +9,7 @@ export interface PublicUser {
 }
 
 export type StaffWithProfile = PublicUser & {
+  postal_code: string | null;
   address: string | null;
   home_nearest_station: string | null;
   phone: string | null;
@@ -47,7 +48,7 @@ export const userRepo = {
   async listStaff(db: Db): Promise<StaffWithProfile[]> {
     const { rows } = await db.query<StaffWithProfile>(
       `SELECT u.id, u.name, u.email, u.role,
-              p.address, p.home_nearest_station, p.phone
+              p.postal_code, p.address, p.home_nearest_station, p.phone
        FROM users u
        LEFT JOIN staff_profiles p ON p.user_id = u.id
        WHERE u.role = 'staff'
@@ -68,19 +69,27 @@ export const userRepo = {
     db: Db,
     p: {
       userId: number;
+      postalCode?: string | null;
       address?: string | null;
       homeNearestStation?: string | null;
       phone?: string | null;
     },
   ): Promise<void> {
     await db.query(
-      `INSERT INTO staff_profiles (user_id, address, home_nearest_station, phone)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO staff_profiles (user_id, postal_code, address, home_nearest_station, phone)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (user_id) DO UPDATE SET
+         postal_code = EXCLUDED.postal_code,
          address = EXCLUDED.address,
          home_nearest_station = EXCLUDED.home_nearest_station,
          phone = EXCLUDED.phone`,
-      [p.userId, p.address ?? null, p.homeNearestStation ?? null, p.phone ?? null],
+      [
+        p.userId,
+        p.postalCode ?? null,
+        p.address ?? null,
+        p.homeNearestStation ?? null,
+        p.phone ?? null,
+      ],
     );
   },
 

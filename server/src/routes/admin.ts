@@ -42,6 +42,7 @@ export function adminRouter(db: Db): Router {
       });
       await userRepo.upsertProfile(db, {
         userId: user.id,
+        postalCode: optStr(req.body, 'postalCode'),
         address: optStr(req.body, 'address'),
         homeNearestStation: optStr(req.body, 'homeNearestStation'),
         phone: optStr(req.body, 'phone'),
@@ -62,6 +63,7 @@ export function adminRouter(db: Db): Router {
       }
       await userRepo.upsertProfile(db, {
         userId,
+        postalCode: optStr(req.body, 'postalCode'),
         address: optStr(req.body, 'address'),
         homeNearestStation: optStr(req.body, 'homeNearestStation'),
         phone: optStr(req.body, 'phone'),

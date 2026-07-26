@@ -41,11 +41,13 @@ describe('Phase 2 data model — schema + seed round-trip (pg-mem)', () => {
     const pool = new Pool();
     query = (sql: string, params?: unknown[]) => pool.query(sql, params);
 
-    const sql = fs.readFileSync(
-      path.join(__dirname, 'migrations', '001_initial_schema.sql'),
-      'utf8',
-    );
-    await query(sql);
+    // Apply every migration in order, exactly as memoryDb/migrate do. Naming a
+    // single file here silently tests a schema the app never runs — 002 and 003
+    // were already being skipped.
+    const dir = path.join(__dirname, 'migrations');
+    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
+      await query(fs.readFileSync(path.join(dir, file), 'utf8'));
+    }
     await seedSampleMonth({ query });
   });
 

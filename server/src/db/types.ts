@@ -16,6 +16,7 @@ export interface UserRow {
 
 export interface StaffProfileRow {
   user_id: number;
+  postal_code: string | null;
   address: string | null;
   home_nearest_station: string | null;
   phone: string | null;

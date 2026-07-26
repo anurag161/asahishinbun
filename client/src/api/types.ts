@@ -30,6 +30,7 @@ export interface StaffMember {
   name: string;
   email: string;
   role: Role;
+  postal_code: string | null;
   address: string | null;
   home_nearest_station: string | null;
   phone: string | null;

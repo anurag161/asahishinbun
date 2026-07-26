@@ -71,9 +71,9 @@ export async function seedSampleMonth(
   const staffId = staff.rows[0].id as number;
 
   await db.query(
-    `INSERT INTO staff_profiles (user_id, address, home_nearest_station, phone)
-     VALUES ($1, $2, $3, $4)`,
-    [staffId, '北海道札幌市中央区', '円山', '090-0000-0000'],
+    `INSERT INTO staff_profiles (user_id, postal_code, address, home_nearest_station, phone)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [staffId, '060-0001', '北海道札幌市中央区', '円山', '090-0000-0000'],
   );
 
   const stadium = await db.query(
@@ -146,6 +146,7 @@ interface RosterStaff {
   name: string;
   email: string;
   homeStation: string;
+  postalCode: string;
   address: string;
   phone: string;
   /** Index into DEMO_STADIUMS. */
@@ -208,37 +209,37 @@ export async function seedRouteFareMatrix(db: Queryable): Promise<void> {
 const DEMO_ROSTER: RosterStaff[] = [
   {
     name: '田中 花子', email: 'tanaka.hanako@example.com', homeStation: '西宮',
-    address: '兵庫県西宮市今津', phone: '090-1111-0001', stadium: 0,
+    postalCode: '663-8113', address: '兵庫県西宮市今津', phone: '090-1111-0001', stadium: 0,
     bucket: 'daikai', tournament: true,
     shift: { days: [1, 2, 4, 5, 8, 9, 11, 12, 15, 16, 18, 19], start: '09:00', end: '18:00', breakMin: 60 },
   },
   {
     name: '佐藤 健', email: 'sato.ken@example.com', homeStation: '三宮',
-    address: '兵庫県神戸市中央区', phone: '090-1111-0002', stadium: 0,
+    postalCode: '650-0001', address: '兵庫県神戸市中央区', phone: '090-1111-0002', stadium: 0,
     bucket: 'henshu', tournament: false,
     shift: { days: [3, 5, 9, 10, 12, 17, 19, 24, 26], start: '10:00', end: '19:00', breakMin: 60 },
   },
   {
     name: '鈴木 一郎', email: 'suzuki.ichiro@example.com', homeStation: '尼崎',
-    address: '兵庫県尼崎市', phone: '090-1111-0003', stadium: 0,
+    postalCode: '660-0801', address: '兵庫県尼崎市', phone: '090-1111-0003', stadium: 0,
     bucket: 'daikai', tournament: true,
     shift: { days: [1, 4, 8, 10, 15, 17, 22, 24, 29, 30], start: '12:00', end: '21:00', breakMin: 60 },
   },
   {
     name: '高橋 美咲', email: 'takahashi.misaki@example.com', homeStation: '新宿',
-    address: '東京都新宿区', phone: '090-2222-0004', stadium: 1,
+    postalCode: '160-0022', address: '東京都新宿区', phone: '090-2222-0004', stadium: 1,
     bucket: 'henshu', tournament: false,
     shift: { days: [2, 5, 9, 12, 16, 23, 25, 30], start: '09:30', end: '18:30', breakMin: 60 },
   },
   {
     name: '伊藤 大輔', email: 'ito.daisuke@example.com', homeStation: '渋谷',
-    address: '東京都渋谷区', phone: '090-2222-0005', stadium: 1,
+    postalCode: '150-0002', address: '東京都渋谷区', phone: '090-2222-0005', stadium: 1,
     bucket: 'daikai', tournament: true,
     shift: { days: [1, 3, 8, 10, 15, 18, 22, 24, 26, 29, 30], start: '08:00', end: '17:00', breakMin: 60 },
   },
   {
     name: '渡辺 さやか', email: 'watanabe.sayaka@example.com', homeStation: '四ツ谷',
-    address: '東京都新宿区四谷', phone: '090-2222-0006', stadium: 1,
+    postalCode: '160-0004', address: '東京都新宿区四谷', phone: '090-2222-0006', stadium: 1,
     bucket: 'henshu', tournament: false,
     shift: { days: [4, 11, 18, 19, 25, 26, 29], start: '10:00', end: '18:00', breakMin: 60 },
   },
@@ -289,9 +290,9 @@ export async function seedDemoRoster(
     const userId = user.rows[0].id as number;
 
     await db.query(
-      `INSERT INTO staff_profiles (user_id, address, home_nearest_station, phone)
-       VALUES ($1, $2, $3, $4)`,
-      [userId, person.address, person.homeStation, person.phone],
+      `INSERT INTO staff_profiles (user_id, postal_code, address, home_nearest_station, phone)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, person.postalCode, person.address, person.homeStation, person.phone],
     );
 
     const startMin = toMinutes(person.shift.start);
