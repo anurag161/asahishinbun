@@ -23,32 +23,73 @@ correct-to-the-yen. Data resets when the process restarts. No `.env` needed.
 
 (For hot-reload development instead: `npm run dev` — server on :4000, client on :5173.)
 
-## B. Hosted demo (persistent, free tier)
+## B. Hosted demo — Render (free)
 
-Single web service that serves both the API and the built client, plus a free Postgres.
+One web service serves the API and the built client. Two ways to set it up.
 
-### 1. Database — Neon (free)
-1. Create a project at https://neon.tech and copy the connection string
-   (`postgresql://…?sslmode=require`).
+### B1. Blueprint (recommended — nothing to type)
 
-### 2. Web service — Render (free)
-Create a **Web Service** from the repo with:
+Render dashboard → **New** → **Blueprint** → pick this repo. It reads
+[`render.yaml`](./render.yaml), which already supplies the build command, start
+command, health check and env. Nothing to fill in by hand.
 
-- **Build command:** `npm install && npm run build`
-- **Start command:** `npm run migrate && npm run seed && npm start`
-  (drop `seed` after the first deploy if you don't want it reset each boot)
+This runs in **demo mode**: no `DATABASE_URL`, so the server boots the in-memory
+database seeded with the June 2026 sample. No Neon project needed to put a URL in
+front of someone. Data resets whenever the service restarts.
+
+### B2. Manual web service
+
+If you create the service by hand instead, both commands need care:
+
+- **Build command:** `npm install --include=dev && npm run build`
+- **Start command:** `npm start`
+
+> **`--include=dev` is required.** `NODE_ENV=production` makes npm skip
+> `devDependencies`, and `tsc`, `vite` and every `@types/*` package live there —
+> so a plain `npm install` installs 172 packages, omits the compiler, and the
+> build dies on `error TS7016: Could not find a declaration file for 'express'`.
+>
+> **Do not chain `npm run migrate` into the start command** unless `DATABASE_URL`
+> is set. Without it, `migrate` exits non-zero, and because the chain is `&&`,
+> `npm start` never runs — the service never boots and Render serves its
+> "Application failed to respond" page rather than the UI.
+
 - **Environment variables:**
 
   | Key | Value |
   |---|---|
-  | `DATABASE_URL` | the Neon connection string |
-  | `JWT_SECRET` | any long random string |
+  | `JWT_SECRET` | any long random string (**required** — the server refuses to boot without it in production) |
   | `NODE_ENV` | `production` |
   | `CLIENT_URL` | the Render URL (for CORS) |
+  | `DATABASE_URL` | *(optional)* a Neon connection string — see below |
+
+### Persistent database (optional)
+
+Demo mode loses data on restart. For persistence, create a project at
+https://neon.tech, copy the connection string (`postgresql://…?sslmode=require`),
+set it as `DATABASE_URL`, and change the start command to:
+
+```
+npm run migrate && npm start
+```
+
+Migrations are tracked in `schema_migrations` and are idempotent, so this is safe
+to run on every boot. Add `npm run seed` once if you want the June 2026 sample
+data in the Neon database too.
 
 Because the server serves `client/dist`, one Render service hosts the whole app —
 no separate frontend deploy needed. (Render free spins down when idle; the first
 request after inactivity takes ~30s to wake.)
+
+### If the deploy shows no UI
+
+The server only serves the client when `client/dist/index.html` exists at
+runtime, so "API works but no UI" means the client build did not run. Check the
+Render **build** log for the `vite build` step. If it is missing or the build
+failed on `tsc`, the build command is missing `--include=dev`.
+
+If the page is Render's own error page instead, the service never started —
+check the **runtime** log for a failed `migrate` or a missing `JWT_SECRET`.
 
 ### 3. PDF (optional)
 Server-side PDF (email attachments, `format=pdf`) needs Chromium:
