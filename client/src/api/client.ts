@@ -1,11 +1,33 @@
 const TOKEN_KEY = 'asahi_token';
 
+/**
+ * The auth token is kept per TAB, not per browser.
+ *
+ * localStorage is shared by every tab of an origin, so signing in as an admin
+ * in one tab overwrote the staff token in another. Worse than logging the first
+ * tab out: it kept displaying the staff UI (the user is read once on mount) while
+ * its requests carried the admin token and came back 403. sessionStorage is
+ * scoped to the tab, so a staff view and an admin view can sit side by side.
+ *
+ * The trade-off is that the token dies with the tab — a reload keeps it, a new
+ * tab starts signed out. For stadium shifts and demos that is the right side of
+ * the trade, and it keeps a bearer token from living indefinitely on a shared
+ * machine. Language stays in localStorage: it's a preference, not a credential.
+ */
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return sessionStorage.getItem(TOKEN_KEY);
 }
 export function setToken(token: string | null): void {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
+  if (token) sessionStorage.setItem(TOKEN_KEY, token);
+  else sessionStorage.removeItem(TOKEN_KEY);
+}
+
+// Tokens written by earlier builds outlive the browser session. Clear any
+// leftover so an old one isn't left sitting in localStorage forever.
+try {
+  localStorage.removeItem(TOKEN_KEY);
+} catch {
+  // Storage can be blocked entirely (private mode, cookies disabled).
 }
 
 export class ApiError extends Error {
