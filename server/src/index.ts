@@ -22,13 +22,15 @@ async function bootstrap() {
   }
 
   const mailer = createMailer();
-  const pdfAvailable = await puppeteerRenderer.available();
+  const pdfEngine = await (
+    puppeteerRenderer as typeof puppeteerRenderer & { describe(): Promise<string | null> }
+  ).describe();
 
   const app = createApp(db, { mailer, pdf: puppeteerRenderer });
   app.listen(config.port, () => {
     console.log(`Asahi payroll app listening on http://localhost:${config.port}`);
     console.log(
-      `  • PDF:   ${pdfAvailable ? 'server-side enabled (Chromium found)' : 'browser Save-as-PDF only (run `npm i puppeteer -w server`)'}`,
+      `  • PDF:   ${pdfEngine ? `server-side enabled via ${pdfEngine}` : 'browser Save-as-PDF only (no Chromium could be started)'}`,
     );
     console.log(
       `  • Email: ${mailer.live ? `SMTP configured (${config.smtp.host})` : 'Ethereal preview mode — real send, viewable URL; set SMTP_* in .env for real delivery'}`,

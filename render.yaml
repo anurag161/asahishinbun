@@ -30,7 +30,9 @@ services:
           type: web
           name: asahi-attendance
           envVarKey: RENDER_EXTERNAL_URL
-      # Puppeteer's default cache (~/.cache) is not carried from build to runtime
-      # on Render; pin it inside the project so server-side PDF keeps working.
-      - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/project/src/.cache/puppeteer
+      # Skip puppeteer's ~170MB Chromium download. It cannot launch on this
+      # runtime anyway (no libnss3/libgbm), and @sparticuz/chromium supplies a
+      # build that can — puppeteer is only the driver here. Cuts build time and
+      # disk, and avoids the ~/.cache-not-carried-to-runtime problem entirely.
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: 'true'
