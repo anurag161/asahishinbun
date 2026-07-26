@@ -5,6 +5,8 @@ import { AppError, asyncHandler } from '../middleware/errorHandler';
 import { authMiddleware, type AuthRequest } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
 import { userRepo } from '../repositories/userRepo';
+import { settingsRepo, EMAIL_TEST_RECIPIENT } from '../repositories/settingsRepo';
+import type { Mailer } from '../services/emailService';
 import { masterRepo } from '../repositories/masterRepo';
 import { attendanceRepo } from '../repositories/attendanceRepo';
 import { expenseRepo } from '../repositories/expenseRepo';
@@ -14,7 +16,10 @@ import { int, oneOf, optInt, optStr, str } from '../utils/parse';
 
 const ROLES = ['staff', 'admin'] as const;
 
-export function adminRouter(db: Db): Router {
+/** Loose on purpose: the mail server is the authority on which addresses exist. */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function adminRouter(db: Db, mailer: Mailer): Router {
   const router = Router();
   router.use(authMiddleware, requireRole('admin'));
 
@@ -259,6 +264,51 @@ export function adminRouter(db: Db): Router {
     asyncHandler(async (req, res) => {
       await masterRepo.removeRouteFare(db, Number(req.params.id));
       res.status(204).end();
+    }),
+  );
+
+  // --- メール設定 (app_settings) ---
+  router.get(
+    '/email-settings',
+    asyncHandler(async (_req, res) => {
+      res.json({
+        testRecipient: await settingsRepo.get(db, EMAIL_TEST_RECIPIENT),
+        smtpConfigured: mailer.live,
+      });
+    }),
+  );
+
+  // Set or clear the address document mail is diverted to. Empty clears it and
+  // returns delivery to each staff member's own registered address.
+  router.put(
+    '/email-settings',
+    asyncHandler(async (req, res) => {
+      const raw = optStr(req.body, 'testRecipient')?.trim() ?? null;
+      if (raw && !EMAIL_RE.test(raw)) {
+        throw new AppError(400, `Invalid email address: ${raw}`);
+      }
+      await settingsRepo.set(db, EMAIL_TEST_RECIPIENT, raw);
+      res.json({ testRecipient: raw, smtpConfigured: mailer.live });
+    }),
+  );
+
+  // Send a throwaway message to the configured address, so an admin can confirm
+  // delivery without generating a real document for a real staff member.
+  router.post(
+    '/email-settings/test',
+    asyncHandler(async (_req, res) => {
+      const to = await settingsRepo.get(db, EMAIL_TEST_RECIPIENT);
+      if (!to) throw new AppError(400, 'No test recipient configured');
+
+      const { messageId, mode, previewUrl } = await mailer.send({
+        to,
+        subject: '【朝日新聞】メール送信テスト',
+        html:
+          '<p>朝日新聞 勤怠・交通費システムからのテスト送信です。</p>' +
+          '<p>このメールが届いていれば、書類のメール送信は正常に動作しています。</p>',
+        attachments: [],
+      });
+      res.json({ sent: true, to, delivery: mode, previewUrl, messageId });
     }),
   );
 

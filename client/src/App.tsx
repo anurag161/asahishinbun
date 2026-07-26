@@ -11,6 +11,7 @@ import { StaffPage } from './pages/admin/StaffPage';
 import { RouteFaresPage } from './pages/admin/RouteFaresPage';
 import { RecordsPage } from './pages/admin/RecordsPage';
 import { AccountsPage } from './pages/admin/AccountsPage';
+import { EmailSettingsPage } from './pages/admin/EmailSettingsPage';
 
 function Home() {
   const { user, loading } = useAuth();
@@ -48,6 +49,7 @@ export function App() {
         <Route path="/admin/staff" element={<StaffPage />} />
         <Route path="/admin/accounts" element={<AccountsPage />} />
         <Route path="/admin/routes" element={<RouteFaresPage />} />
+        <Route path="/admin/email" element={<EmailSettingsPage />} />
       </Route>
 
       <Route path="/" element={<Home />} />

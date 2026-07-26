@@ -81,7 +81,7 @@ export function createApp(db: Db, deps: AppDeps = {}) {
   app.use('/api/mypage', mypageRouter(db));
   app.use('/api/default-month', defaultMonthRouter(db));
   app.use('/api/stadiums', stadiumsRouter(db));
-  app.use('/api/admin', adminRouter(db));
+  app.use('/api/admin', adminRouter(db, documentDeps.mailer));
   app.use('/api/payroll', payrollRouter(db));
   app.use('/api/documents', documentsRouter(db, documentDeps));
 

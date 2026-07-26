@@ -7,16 +7,13 @@ import { renderDocument } from '../documents/documentService';
 import { userRepo } from '../repositories/userRepo';
 import type { PdfRenderer } from '../pdf/pdfRenderer';
 import type { Mailer } from '../services/emailService';
-import { optStr, str } from '../utils/parse';
+import { str } from '../utils/parse';
+import { settingsRepo, EMAIL_TEST_RECIPIENT } from '../repositories/settingsRepo';
 
 export interface DocumentDeps {
   pdf: PdfRenderer;
   mailer: Mailer;
 }
-
-// Deliberately permissive — the mail server is the real authority on which
-// addresses exist. This only rejects input that could not be an address at all.
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function parseType(raw: string): DocumentType {
   if (!DOCUMENT_TYPES.includes(raw as DocumentType)) {
@@ -81,14 +78,13 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
       const staff = await userRepo.findById(db, staffId);
       if (!staff) throw new AppError(404, 'Staff not found');
 
-      // Optional custom recipient. Lets the client send a document to an address
-      // of their choosing to confirm mail delivery works, without editing (or
-      // temporarily corrupting) the staff member's registered email.
-      const requested = optStr(req.body, 'to')?.trim();
-      const to = requested || staff.email;
-      if (!EMAIL_RE.test(to)) {
-        throw new AppError(400, `Invalid recipient email: ${to}`);
-      }
+      // メール設定: while an admin has a test recipient configured, every document
+      // email is diverted there so delivery can be checked against an inbox they
+      // can actually read. It is a redirect, not an edit — nobody's registered
+      // address changes, and clearing the setting restores normal delivery.
+      const override = await settingsRepo.get(db, EMAIL_TEST_RECIPIENT);
+      const to = override ?? staff.email;
+      const redirected = to !== staff.email;
 
       const doc = await renderDocument(db, type, staffId, month);
 
@@ -115,6 +111,9 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
       res.json({
         sent: true,
         to,
+        // So the UI can say the mail went somewhere other than the staff member.
+        redirected,
+        intendedFor: staff.email,
         pdfAttached,
         delivery: mode,
         previewUrl,

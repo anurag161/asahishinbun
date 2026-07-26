@@ -22,18 +22,10 @@ export function ExportPage() {
   const [active, setActive] = useState<DocType>('payslip');
   const [html, setHtml] = useState('');
   const [caps, setCaps] = useState<Capabilities>({ pdf: false, email: false });
-  // Where to send. Defaults to the signed-in staff member's registered address;
-  // overriding it is how you confirm delivery against an inbox you can read.
-  const [emailTo, setEmailTo] = useState('');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    api.get<User>('/api/auth/me')
-      .then((u) => {
-        setMe(u);
-        setEmailTo(u.email);
-      })
-      .catch(() => notify(t('common.loadError'), 'err'));
+    api.get<User>('/api/auth/me').then(setMe).catch(() => notify(t('common.loadError'), 'err'));
     api.get<Capabilities>('/api/capabilities').then(setCaps).catch(() => {});
   }, [notify, t]);
 
@@ -68,7 +60,6 @@ export function ExportPage() {
     try {
       const res = await api.post<{ to: string; delivery: string; pdfAttached: boolean; previewUrl?: string }>(
         `/api/documents/${type}/${me!.id}/email?month=${month}`,
-        { to: emailTo },
       );
       if (res.delivery === 'smtp') {
         notify(t('export.emailed', { to: res.to }), 'ok');
@@ -111,31 +102,6 @@ export function ExportPage() {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="row">
-          <div className="field">
-            <label htmlFor="email-to">{t('export.sendTo')}</label>
-            <input
-              id="email-to"
-              type="email"
-              value={emailTo}
-              onChange={(e) => setEmailTo(e.target.value)}
-              placeholder={me?.email ?? ''}
-            />
-          </div>
-          <button
-            className="btn"
-            onClick={() => setEmailTo(me?.email ?? '')}
-            disabled={!me || emailTo === me.email}
-          >
-            {t('export.sendToReset')}
-          </button>
-        </div>
-        <p className="muted" style={{ fontSize: 12, margin: '10px 2px 0' }}>
-          {t('export.sendToHint')}
-        </p>
       </div>
 
       <div className="banner" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>

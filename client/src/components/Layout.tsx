@@ -14,6 +14,7 @@ const ADMIN_LINKS = [
   { to: '/admin/staff', key: 'nav.staff' },
   { to: '/admin/accounts', key: 'nav.accounts' },
   { to: '/admin/routes', key: 'nav.routes' },
+  { to: '/admin/email', key: 'nav.email' },
 ];
 
 export function Layout() {

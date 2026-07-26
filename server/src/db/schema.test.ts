@@ -58,6 +58,7 @@ describe('Phase 2 data model — schema + seed round-trip (pg-mem)', () => {
     const names = rows.map((r) => r.table_name).sort();
     expect(names).toEqual(
       [
+        'app_settings',
         'attendance',
         'expense_lines',
         'rate_config',
