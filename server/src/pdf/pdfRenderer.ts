@@ -32,9 +32,40 @@ async function loadPuppeteer(): Promise<any | null> {
   return cachedModule;
 }
 
+const LAUNCH_ARGS = ['--no-sandbox', '--disable-setuid-sandbox'];
+
+/**
+ * Whether Chromium actually starts here — not merely whether the package is
+ * installed. On a host without Chromium's shared libraries (Render's Node
+ * runtime, most slim containers) the import succeeds and the launch does not,
+ * so checking the import alone reports PDF as working and then throws mid-request.
+ *
+ * Probed once and cached; the result cannot change without a restart.
+ */
+let launchProbe: Promise<boolean> | null = null;
+
+async function canLaunch(): Promise<boolean> {
+  const puppeteer = await loadPuppeteer();
+  if (!puppeteer) return false;
+
+  let browser: { close(): Promise<void> } | undefined;
+  try {
+    browser = await puppeteer.launch({ headless: true, args: LAUNCH_ARGS });
+    return true;
+  } catch (err) {
+    console.warn(
+      `  • PDF: Chromium is installed but failed to launch — ${(err as Error).message.split('\n')[0]}`,
+    );
+    return false;
+  } finally {
+    await browser?.close().catch(() => {});
+  }
+}
+
 export const puppeteerRenderer: PdfRenderer = {
   async available() {
-    return (await loadPuppeteer()) !== null;
+    launchProbe ??= canLaunch();
+    return launchProbe;
   },
 
   async render(html: string): Promise<Buffer> {
@@ -42,10 +73,7 @@ export const puppeteerRenderer: PdfRenderer = {
     if (!puppeteer) {
       throw new Error('PDF rendering unavailable: puppeteer is not installed.');
     }
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    const browser = await puppeteer.launch({ headless: true, args: LAUNCH_ARGS });
     try {
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'networkidle0' });

@@ -89,24 +89,43 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
       const doc = await renderDocument(db, type, staffId, month);
 
       // Attach a PDF when available; otherwise send the document inline as HTML.
+      //
+      // The attachment is a bonus, not the payload — the HTML body IS the
+      // document. So a rendering failure must not sink the send: Chromium can
+      // be present but unable to start, and letting that propagate turned "your
+      // payslip email" into a 500 with nothing delivered.
       const attachments = [];
       let pdfAttached = false;
       if (await deps.pdf.available()) {
-        const pdf = await deps.pdf.render(doc.html);
-        attachments.push({
-          filename: `${doc.filenameBase}.pdf`,
-          content: pdf,
-          contentType: 'application/pdf',
-        });
-        pdfAttached = true;
+        try {
+          const pdf = await deps.pdf.render(doc.html);
+          attachments.push({
+            filename: `${doc.filenameBase}.pdf`,
+            content: pdf,
+            contentType: 'application/pdf',
+          });
+          pdfAttached = true;
+        } catch (err) {
+          console.warn(
+            `PDF attachment failed, sending HTML only: ${(err as Error).message.split('\n')[0]}`,
+          );
+        }
       }
 
-      const { messageId, mode, previewUrl } = await deps.mailer.send({
-        to,
-        subject: `【朝日新聞】${doc.title}`,
-        html: doc.html,
-        attachments,
-      });
+      // Surface why delivery failed. Falling through to the generic handler gave
+      // the UI "Internal server error", which says nothing about the mail server.
+      let sendResult;
+      try {
+        sendResult = await deps.mailer.send({
+          to,
+          subject: `【朝日新聞】${doc.title}`,
+          html: doc.html,
+          attachments,
+        });
+      } catch (err) {
+        throw new AppError(502, `Email delivery failed: ${(err as Error).message.split('\n')[0]}`);
+      }
+      const { messageId, mode, previewUrl } = sendResult;
 
       res.json({
         sent: true,

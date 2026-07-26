@@ -137,6 +137,51 @@ describe('email flow', () => {
     expect(msg.attachments?.[0]?.contentType).toBe('application/pdf');
   });
 
+  // Regression: on Render, Chromium is installed but cannot launch. available()
+  // only checked the import, so the route tried to render an attachment and the
+  // throw took the whole send down — a 500 and no email at all.
+  it('still sends the email when PDF rendering throws', async () => {
+    const mailer = stubMailer();
+    const brokenPdf: PdfRenderer = {
+      available: async () => true,
+      render: async () => {
+        throw new Error('Failed to launch the browser process: libnss3.so: cannot open shared object file');
+      },
+    };
+    const ctx = await makeTestContext({ pdf: brokenPdf, mailer });
+
+    const res = await request(ctx.app)
+      .post(`/api/documents/payslip/${ctx.staffId}/email?month=2026-06`)
+      .set(auth(ctx.staffToken));
+
+    expect(res.status).toBe(200);
+    expect(res.body.sent).toBe(true);
+    expect(res.body.pdfAttached).toBe(false);
+
+    // The HTML body is the document, so it must still carry the figures.
+    expect(mailer.sent).toHaveLength(1);
+    expect(mailer.sent[0]!.attachments ?? []).toHaveLength(0);
+    expect(mailer.sent[0]!.html).toContain('185,152');
+  });
+
+  it('reports why delivery failed instead of a bare 500', async () => {
+    const failing: Mailer = {
+      live: true,
+      async send() {
+        throw new Error('connect ECONNREFUSED 10.0.0.1:587');
+      },
+    };
+    const ctx = await makeTestContext({ pdf: stubPdf(false), mailer: failing });
+
+    const res = await request(ctx.app)
+      .post(`/api/documents/payslip/${ctx.staffId}/email?month=2026-06`)
+      .set(auth(ctx.staffToken));
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toContain('Email delivery failed');
+    expect(res.body.error).toContain('ECONNREFUSED');
+  });
+
   it('passes the delivery mode and Ethereal preview URL back to the client', async () => {
     const mailer: Mailer = {
       live: false,
