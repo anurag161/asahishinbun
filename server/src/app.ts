@@ -14,6 +14,7 @@ import { attendanceRouter } from './routes/attendance';
 import { expensesRouter } from './routes/expenses';
 import { mypageRouter } from './routes/mypage';
 import { stadiumsRouter } from './routes/stadiums';
+import { defaultMonthRouter } from './routes/defaultMonth';
 import { adminRouter } from './routes/admin';
 import { payrollRouter } from './routes/payroll';
 import { documentsRouter, type DocumentDeps } from './routes/documents';
@@ -78,6 +79,7 @@ export function createApp(db: Db, deps: AppDeps = {}) {
   app.use('/api/attendance', attendanceRouter(db));
   app.use('/api/expenses', expensesRouter(db));
   app.use('/api/mypage', mypageRouter(db));
+  app.use('/api/default-month', defaultMonthRouter(db));
   app.use('/api/stadiums', stadiumsRouter(db));
   app.use('/api/admin', adminRouter(db));
   app.use('/api/payroll', payrollRouter(db));

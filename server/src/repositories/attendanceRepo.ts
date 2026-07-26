@@ -23,6 +23,25 @@ function normalize(row: AttendanceRow): AttendanceRow {
 }
 
 export const attendanceRepo = {
+  /**
+   * Month of the most recent work day ('YYYY-MM'), or undefined if there is
+   * none. Pass a staffId to scope it to one person; omit it for the whole org.
+   *
+   * max() is formatted in JS rather than with to_char so this behaves the same
+   * on pg-mem (the demo/in-memory database) as on Neon.
+   */
+  async latestMonth(db: Db, staffId?: number): Promise<string | undefined> {
+    const { rows } =
+      staffId === undefined
+        ? await db.query<{ d: unknown }>(`SELECT max(work_date) AS d FROM attendance`)
+        : await db.query<{ d: unknown }>(
+            `SELECT max(work_date) AS d FROM attendance WHERE staff_id = $1`,
+            [staffId],
+          );
+    const d = rows[0]?.d;
+    return d == null ? undefined : asDateString(d).slice(0, 7);
+  },
+
   async listForMonth(
     db: Db,
     staffId: number,

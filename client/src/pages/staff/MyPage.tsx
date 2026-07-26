@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../../api/client';
 import type { MyPageSummary } from '../../api/types';
 import { MonthPicker } from '../../components/MonthPicker';
-import { clock, currentMonth, timeOfDay, yen } from '../../utils/format';
+import { useMonth } from '../../hooks/useMonth';
+import { clock, timeOfDay, yen } from '../../utils/format';
 
 export function MyPage() {
   const { t } = useTranslation();
-  const [month, setMonth] = useState(currentMonth());
+  const [month, setMonth] = useMonth();
   const [summary, setSummary] = useState<MyPageSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

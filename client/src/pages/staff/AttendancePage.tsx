@@ -4,8 +4,9 @@ import { api, ApiError } from '../../api/client';
 import type { AttendanceRow, ExpenseRow, Stadium, TransportResult } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { MonthPicker } from '../../components/MonthPicker';
+import { useMonth } from '../../hooks/useMonth';
 import { PencilIcon, TrashIcon } from '../../components/icons';
-import { clock, currentMonth, parseTime, timeOfDay, yen } from '../../utils/format';
+import { clock, parseTime, timeOfDay, yen } from '../../utils/format';
 
 /** The four fields a staff member can correct in-place on a saved day. */
 type EditForm = { date: string; stadiumId: number; start: string; end: string };
@@ -13,7 +14,7 @@ type EditForm = { date: string; stadiumId: number; start: string; end: string };
 export function AttendancePage() {
   const { t } = useTranslation();
   const { notify } = useToast();
-  const [month, setMonth] = useState(currentMonth());
+  const [month, setMonth] = useMonth();
   const [stadiums, setStadiums] = useState<Stadium[]>([]);
   const [days, setDays] = useState<AttendanceRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);

@@ -5,14 +5,15 @@ import type { AttendanceRow, RecordsResponse, Stadium } from '../../api/types';
 import type { CostBucket } from '@asahi/shared';
 import { useToast } from '../../context/ToastContext';
 import { MonthPicker } from '../../components/MonthPicker';
-import { clock, currentMonth, timeOfDay, yen } from '../../utils/format';
+import { useMonth } from '../../hooks/useMonth';
+import { clock, timeOfDay, yen } from '../../utils/format';
 
 const BUCKETS: CostBucket[] = ['henshu', 'daikai'];
 
 export function RecordsPage() {
   const { t } = useTranslation();
   const { notify } = useToast();
-  const [month, setMonth] = useState(currentMonth());
+  const [month, setMonth] = useMonth();
   const [data, setData] = useState<RecordsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

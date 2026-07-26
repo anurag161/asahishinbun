@@ -4,7 +4,7 @@ import { api, ApiError, authFetch } from '../../api/client';
 import type { User } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { MonthPicker } from '../../components/MonthPicker';
-import { currentMonth } from '../../utils/format';
+import { useMonth } from '../../hooks/useMonth';
 
 type DocType = 'timesheet' | 'transport' | 'allowances' | 'invoice' | 'payslip';
 const DOC_TYPES: DocType[] = ['timesheet', 'transport', 'allowances', 'invoice', 'payslip'];
@@ -17,7 +17,7 @@ interface Capabilities {
 export function ExportPage() {
   const { t } = useTranslation();
   const { notify } = useToast();
-  const [month, setMonth] = useState(currentMonth());
+  const [month, setMonth] = useMonth();
   const [me, setMe] = useState<User | null>(null);
   const [active, setActive] = useState<DocType>('payslip');
   const [html, setHtml] = useState('');
