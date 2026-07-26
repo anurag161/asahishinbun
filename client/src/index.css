@@ -150,7 +150,37 @@ input:focus, select:focus, .btn:focus-visible, .nav a:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 1px;
 }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+/* min-width: 0 is load-bearing. Flex items default to min-width: auto, so an
+   input refuses to shrink below its intrinsic width and overflows its field
+   into the next one instead of the field simply getting narrower. */
 .row > .field { flex: 1; min-width: 120px; margin-bottom: 0; }
+.field > input, .field > select { min-width: 0; }
+
+/* These must out-specify `.row > .field { flex: 1 }` above (0,2,0), or the
+   fields collapse to a 0 basis and their contents overflow into the next one. */
+
+/* 休憩: a checkbox that enables an hours input, kept inside its own field. */
+.row > .field-break { flex: 0 0 132px; min-width: 132px; }
+.break-control { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.break-control input[type="checkbox"] { flex: 0 0 auto; width: 18px; margin: 0; }
+.break-control input[type="number"] { flex: 1 1 auto; min-width: 0; }
+
+/* 弁当代有無: the toggle plus, when it is disabled, the reason why — sitting
+   beside the control it explains rather than at the foot of the form.
+   Both children are fixed-width and non-shrinking: allowed to shrink, the note
+   collapses to one character per line and drags the whole row's height with it.
+   At this width it wraps to two 11px lines, shorter than the select, so showing
+   it never changes the row height. The row wraps as a whole if space runs out. */
+.row > .field-lunch { flex: 0 0 auto; min-width: 0; }
+.lunch-control { display: flex; gap: 8px; align-items: center; }
+.lunch-control select { flex: 0 0 108px; }
+.field-note {
+  flex: 0 0 152px;
+  font-size: 11px; line-height: 1.3; color: var(--text-muted);
+}
+/* Keeps its space, so nothing reflows; visibility (not display) also drops it
+   from the accessibility tree while the toggle is usable. */
+.field-note.is-hidden { visibility: hidden; }
 
 /* Tables */
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }

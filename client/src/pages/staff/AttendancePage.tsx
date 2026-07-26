@@ -209,15 +209,14 @@ export function AttendancePage() {
             <label>{t('attendance.end')}</label>
             <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} required />
           </div>
-          <div className="field" style={{ maxWidth: 130 }}>
+          <div className="field field-break">
             <label>{t('attendance.breakMinutes')}</label>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div className="break-control">
               <input
                 type="checkbox"
                 checked={breakTaken}
                 onChange={(e) => setBreakTaken(e.target.checked)}
                 aria-label={t('attendance.breakTaken')}
-                style={{ width: 18 }}
               />
               <input
                 type="number"
@@ -229,27 +228,31 @@ export function AttendancePage() {
               />
             </div>
           </div>
-          <div className="field" style={{ maxWidth: 120 }}>
-            <label>{t('attendance.lunch')}</label>
-            <select
-              value={lunchEligible && lunchAllowance ? 'yes' : 'no'}
-              disabled={!lunchEligible}
-              onChange={(e) => setLunchAllowance(e.target.value === 'yes')}
-              title={lunchEligible ? '' : t('attendance.lunchIneligible')}
-            >
-              <option value="yes">{t('attendance.lunchYes')}</option>
-              <option value="no">{t('attendance.lunchNo')}</option>
-            </select>
+          <div className="field field-lunch">
+            <label htmlFor="lunch">{t('attendance.lunch')}</label>
+            {/* The ineligibility note sits beside the toggle it explains, not at
+                the foot of the form where it read as a note about the whole row. */}
+            <div className="lunch-control">
+              <select
+                id="lunch"
+                value={lunchEligible && lunchAllowance ? 'yes' : 'no'}
+                disabled={!lunchEligible}
+                onChange={(e) => setLunchAllowance(e.target.value === 'yes')}
+              >
+                <option value="yes">{t('attendance.lunchYes')}</option>
+                <option value="no">{t('attendance.lunchNo')}</option>
+              </select>
+              {/* Always rendered, only hidden — otherwise the row reflows and the
+                  submit button jumps as the entered hours cross 6. */}
+              <span className={`field-note${lunchEligible ? ' is-hidden' : ''}`}>
+                {t('attendance.lunchIneligible')}
+              </span>
+            </div>
           </div>
           <button className="btn primary" type="submit" disabled={busy || stadiums.length === 0}>
             {t('attendance.addDay')}
           </button>
         </div>
-        {!lunchEligible && (
-          <p className="muted" style={{ fontSize: 12, margin: '10px 2px 0' }}>
-            {t('attendance.lunchIneligible')}
-          </p>
-        )}
       </form>
 
       <h2 style={{ margin: '4px 0 10px' }}>{t('attendance.existing')}</h2>
@@ -262,13 +265,12 @@ export function AttendancePage() {
               <th>{t('attendance.start')}</th>
               <th>{t('attendance.end')}</th>
               <th className="num">{t('attendance.worked')}</th>
-              <th>{t('attendance.bucket')}</th>
               <th className="num">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {days.length === 0 ? (
-              <tr><td colSpan={7} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+              <tr><td colSpan={6} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
             ) : (
               days.map((d) => editId === d.id ? (
                 <tr key={d.id}>
@@ -292,9 +294,8 @@ export function AttendancePage() {
                     <input type="time" value={edit.end}
                       onChange={(e) => setEdit((f) => ({ ...f, end: e.target.value }))} />
                   </td>
-                  {/* Worked time and 区分 are derived/admin-owned, so they stay read-only. */}
+                  {/* Worked time is derived, so it stays read-only. */}
                   <td className="num">{clock(worked(d))}</td>
-                  <td><span className={`pill ${d.bucket}`}>{t(`bucket.${d.bucket}`)}</span></td>
                   <td className="num">
                     <span className="row-actions">
                       <button className="btn sm primary" disabled={busy}
@@ -311,7 +312,6 @@ export function AttendancePage() {
                   <td>{timeOfDay(d.start_minutes)}</td>
                   <td>{timeOfDay(d.end_minutes)}</td>
                   <td className="num">{clock(worked(d))}</td>
-                  <td><span className={`pill ${d.bucket}`}>{t(`bucket.${d.bucket}`)}</span></td>
                   <td className="num">
                     <span className="row-actions">
                       <button
