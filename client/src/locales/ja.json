@@ -42,6 +42,9 @@
     "emailedPreview": "{{to}} に送信しました — プレビューを開きます…",
     "emailedCaptured": "送信をシミュレートしました（SMTP未設定）", "print": "印刷 / PDF保存",
     "pdfReady": "PDF: サーバー生成 有効", "pdfBrowser": "PDF: ブラウザの「PDF保存」をご利用ください",
+    "sendTo": "送信先メールアドレス",
+    "sendToReset": "本人のアドレスに戻す",
+    "sendToHint": "既定は本人の登録アドレスです。別のアドレスに変えると、そのアドレス宛に送信され、メール送信の動作確認ができます（登録アドレスは変更されません）。",
     "emailReady": "メール: SMTP設定済み", "emailCapture": "メール: プレビュー受信箱（実送信はSMTP_*設定時）"
   },
   "stadiums": {
@@ -49,7 +52,7 @@
   },
   "staff": {
     "title": "アルバイトマスタ", "name": "氏名", "email": "メール", "password": "パスワード",
-    "address": "住所", "homeStation": "自宅最寄り駅", "phone": "電話番号"
+    "postalCode": "郵便番号", "address": "住所", "homeStation": "自宅最寄り駅", "phone": "電話番号"
   },
   "routes": {
     "title": "区間別交通費", "from": "出発駅", "to": "到着駅", "fare": "片道運賃",

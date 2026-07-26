@@ -41,6 +41,9 @@
     "emailedPreview": "Sent to {{to}} — opening the email preview…",
     "emailedCaptured": "Send simulated (no SMTP configured)", "print": "Print / Save as PDF",
     "pdfReady": "PDF: server-side ready", "pdfBrowser": "PDF: use the browser's Save as PDF",
+    "sendTo": "Send to",
+    "sendToReset": "Reset to own address",
+    "sendToHint": "Defaults to the staff member's registered address. Change it to send to any inbox you can check, to confirm mail delivery works. The registered address is not modified.",
     "emailReady": "Email: SMTP configured", "emailCapture": "Email: preview inbox (set SMTP_* for real delivery)"
   },
   "stadiums": {
@@ -48,7 +51,7 @@
   },
   "staff": {
     "title": "Staff", "name": "Name", "email": "Email", "password": "Password",
-    "address": "Address", "homeStation": "Home nearest station", "phone": "Phone"
+    "postalCode": "Postal code", "address": "Address", "homeStation": "Home nearest station", "phone": "Phone"
   },
   "routes": {
     "title": "Route Fares", "from": "From station", "to": "To station", "fare": "One-way fare",

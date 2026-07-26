@@ -7,12 +7,16 @@ import { renderDocument } from '../documents/documentService';
 import { userRepo } from '../repositories/userRepo';
 import type { PdfRenderer } from '../pdf/pdfRenderer';
 import type { Mailer } from '../services/emailService';
-import { str } from '../utils/parse';
+import { optStr, str } from '../utils/parse';
 
 export interface DocumentDeps {
   pdf: PdfRenderer;
   mailer: Mailer;
 }
+
+// Deliberately permissive — the mail server is the real authority on which
+// addresses exist. This only rejects input that could not be an address at all.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function parseType(raw: string): DocumentType {
   if (!DOCUMENT_TYPES.includes(raw as DocumentType)) {
@@ -77,6 +81,15 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
       const staff = await userRepo.findById(db, staffId);
       if (!staff) throw new AppError(404, 'Staff not found');
 
+      // Optional custom recipient. Lets the client send a document to an address
+      // of their choosing to confirm mail delivery works, without editing (or
+      // temporarily corrupting) the staff member's registered email.
+      const requested = optStr(req.body, 'to')?.trim();
+      const to = requested || staff.email;
+      if (!EMAIL_RE.test(to)) {
+        throw new AppError(400, `Invalid recipient email: ${to}`);
+      }
+
       const doc = await renderDocument(db, type, staffId, month);
 
       // Attach a PDF when available; otherwise send the document inline as HTML.
@@ -93,7 +106,7 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
       }
 
       const { messageId, mode, previewUrl } = await deps.mailer.send({
-        to: staff.email,
+        to,
         subject: `【朝日新聞】${doc.title}`,
         html: doc.html,
         attachments,
@@ -101,7 +114,7 @@ export function documentsRouter(db: Db, deps: DocumentDeps): Router {
 
       res.json({
         sent: true,
-        to: staff.email,
+        to,
         pdfAttached,
         delivery: mode,
         previewUrl,
