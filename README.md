@@ -16,6 +16,11 @@ npm install && npm run demo      # → http://localhost:4000
 Sign in as **staff@example.com / staff123** or **admin@example.com / admin123**. It boots on an
 in-memory database seeded with the client's June 2026 sample, so it opens correct-to-the-yen.
 
+## User guide (for the Tokyo office)
+
+Step-by-step operating manual for first-time users, in both languages:
+[日本語](./docs/USERGUIDE.ja.md) · [English](./docs/USERGUIDE.en.md).
+
 ## Monorepo layout
 
 ```
