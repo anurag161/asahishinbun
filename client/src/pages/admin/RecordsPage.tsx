@@ -71,6 +71,7 @@ export function RecordsPage() {
   const stadiumName = (id: number) => stadiums.find((s) => s.id === id)?.name ?? `#${id}`;
   const worked = (d: AttendanceRow) =>
     d.end_minutes - d.start_minutes - (d.break_taken ? d.break_minutes : 0);
+  const lunchMark = (d: AttendanceRow) => (d.lunch_allowance && worked(d) > 6 * 60 ? '○' : '×');
 
   return (
     <>
@@ -139,12 +140,13 @@ export function RecordsPage() {
                   <th className="num">{t('attendance.end')}</th>
                   <th className="num">{t('attendance.break')}</th>
                   <th className="num">{t('attendance.worked')}</th>
+                  <th style={{ textAlign: 'center' }}>{t('attendance.lunch')}</th>
                   <th>{t('attendance.bucket')}</th>
                 </tr>
               </thead>
               <tbody>
                 {days.length === 0 ? (
-                  <tr><td colSpan={7} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+                  <tr><td colSpan={8} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
                 ) : (
                   days.map((d) => (
                     <tr key={d.id}>
@@ -154,6 +156,7 @@ export function RecordsPage() {
                       <td className="num">{timeOfDay(d.end_minutes)}</td>
                       <td className="num">{d.break_taken && d.break_minutes ? clock(d.break_minutes) : '—'}</td>
                       <td className="num">{clock(worked(d))}</td>
+                      <td style={{ textAlign: 'center' }}>{lunchMark(d)}</td>
                       <td>
                         <select
                           value={d.bucket}
