@@ -18,8 +18,13 @@ in-memory database seeded with the client's June 2026 sample, so it opens correc
 
 ## User guide (for the Tokyo office)
 
-Step-by-step operating manual for first-time users, in both languages:
-[日本語](./docs/USERGUIDE.ja.md) · [English](./docs/USERGUIDE.en.md).
+Step-by-step operating manual for first-time users. **PDF** (print/share-ready):
+[日英併記 / Bilingual](./docs/USERGUIDE.bilingual.pdf) ·
+[日本語](./docs/USERGUIDE.ja.pdf) · [English](./docs/USERGUIDE.en.pdf).
+
+Source Markdown: [`docs/USERGUIDE.ja.md`](./docs/USERGUIDE.ja.md) ·
+[`docs/USERGUIDE.en.md`](./docs/USERGUIDE.en.md). Regenerate the PDFs after editing with
+`npm run guide:pdf` (renders via the bundled Chromium + Noto Sans JP).
 
 ## Monorepo layout
 
