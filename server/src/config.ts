@@ -36,6 +36,12 @@ export const config = {
   get resendApiKey(): string {
     return process.env.RESEND_API_KEY ?? '';
   },
+  // Brevo's HTTP transactional API (https://api.brevo.com, port 443). Same reason
+  // as Resend — it delivers where outbound SMTP is blocked (Render free). Preferred
+  // when set, so an existing Brevo account works in production without SMTP.
+  get brevoApiKey(): string {
+    return process.env.BREVO_API_KEY ?? '';
+  },
   smtp: {
     host: process.env.SMTP_HOST ?? 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT ?? 587),

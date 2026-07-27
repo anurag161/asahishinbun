@@ -32,9 +32,14 @@ async function bootstrap() {
     console.log(
       `  • PDF:   ${pdfEngine ? `server-side enabled via ${pdfEngine}` : 'browser Save-as-PDF only (no Chromium could be started)'}`,
     );
-    console.log(
-      `  • Email: ${mailer.live ? `SMTP configured (${config.smtp.host})` : 'Ethereal preview mode — real send, viewable URL; set SMTP_* in .env for real delivery'}`,
-    );
+    const emailMode = config.brevoApiKey
+      ? 'Brevo HTTPS API (works on Render — no SMTP ports needed)'
+      : config.resendApiKey
+        ? 'Resend HTTPS API (works on Render — no SMTP ports needed)'
+        : mailer.live
+          ? `SMTP (${config.smtp.host}) — blocked on Render free; set BREVO_API_KEY for HTTPS delivery`
+          : 'Ethereal preview mode — set BREVO_API_KEY (or SMTP_*) for real delivery';
+    console.log(`  • Email: ${emailMode}`);
   });
 }
 
