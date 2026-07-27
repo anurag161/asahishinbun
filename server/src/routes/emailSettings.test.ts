@@ -8,7 +8,7 @@
  */
 
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeTestContext, type TestContext } from '../testing/harness';
 import type { Mailer } from '../services/emailService';
 
@@ -121,5 +121,54 @@ describe('admin email settings', () => {
       .set(auth(ctx.staffToken))
       .send({ testRecipient: 'x@y.jp' })
       .expect(403);
+  });
+});
+
+/**
+ * Delivery over HTTPS. Render's free instances block outbound 25/465/587, so
+ * every SMTP tier times out there regardless of provider; port 443 is the only
+ * way mail leaves that host.
+ */
+describe('Resend HTTPS delivery', () => {
+  const realFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+    delete process.env.RESEND_API_KEY;
+  });
+
+  it('posts to the Resend API instead of opening an SMTP connection', async () => {
+    process.env.RESEND_API_KEY = 're_test_key';
+    const calls: { url: string; body: any }[] = [];
+    globalThis.fetch = (async (url: any, init: any) => {
+      calls.push({ url: String(url), body: JSON.parse(init.body) });
+      return new Response(JSON.stringify({ id: 'msg_123' }), { status: 200 });
+    }) as typeof fetch;
+
+    // Fresh app so createMailer() picks up the key.
+    const local = await makeTestContext();
+    const res = await request(local.app)
+      .post(`/api/documents/payslip/${local.staffId}/email?month=2026-06`)
+      .set(auth(local.staffToken));
+
+    expect(res.status).toBe(200);
+    expect(res.body.delivery).toBe('api');
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toBe('https://api.resend.com/emails');
+    expect(calls[0]!.body.to).toEqual(['staff@example.com']);
+    expect(calls[0]!.body.subject).toContain('給料計算書');
+  });
+
+  it('surfaces a rejection from the API rather than a bare 500', async () => {
+    process.env.RESEND_API_KEY = 're_test_key';
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ message: 'domain is not verified' }), { status: 403 })) as typeof fetch;
+
+    const local = await makeTestContext();
+    const res = await request(local.app)
+      .post(`/api/documents/payslip/${local.staffId}/email?month=2026-06`)
+      .set(auth(local.staffToken));
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toContain('domain is not verified');
   });
 });

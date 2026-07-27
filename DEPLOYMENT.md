@@ -91,28 +91,44 @@ failed on `tsc`, the build command is missing `--include=dev`.
 If the page is Render's own error page instead, the service never started —
 check the **runtime** log for a failed `migrate` or a missing `JWT_SECRET`.
 
-### 3. PDF (optional)
-Server-side PDF (email attachments, `format=pdf`) needs Chromium:
+### Email (optional)
 
-```bash
-npm i puppeteer -w server
-```
+Out of the box the email endpoint works: with nothing configured it sends via
+Ethereal and returns a preview URL.
 
-Add it before deploying if you want emailed PDFs. Without it, the in-app document
-view + browser "Save as PDF" still works everywhere, and email sends the HTML.
-
-### 4. Email (optional)
-To actually send (not just capture) the monthly document email, set SMTP — free via
-Brevo (300/day) or a Gmail app password:
+To deliver to a **real** inbox from Render, you must use an HTTP API, not SMTP.
+Render's free instances block outbound ports **25, 465 and 587**, so every SMTP
+provider fails there with `Email delivery failed: Connection timeout` — the
+credentials are irrelevant. Port 443 is not blocked.
 
 | Key | Value |
 |---|---|
-| `SMTP_HOST` | e.g. `smtp-relay.brevo.com` |
-| `SMTP_PORT` | `587` |
-| `SMTP_USER` / `SMTP_PASS` | provider credentials |
-| `SMTP_FROM` | `Asahi Payroll <no-reply@yourdomain>` |
+| `RESEND_API_KEY` | a key from https://resend.com → API Keys |
+| `SMTP_FROM` | `Asahi Payroll <onboarding@resend.dev>` |
 
-Without these, the email endpoint captures the message and reports `delivery: "captured"`.
+With no verified domain, Resend only sends **from** `onboarding@resend.dev` and
+only **to** your own account address. Verify a domain (DNS records) to mail
+staff at arbitrary addresses.
+
+`SMTP_*` still works locally, or on any host that allows outbound 587 — see
+[`.env.example`](./.env.example).
+
+Once mail is configured, an admin can point all document email at one inbox from
+the **メール設定** page and use テスト送信 to confirm delivery.
+
+### PDF
+
+Server-side PDF works on Render via `@sparticuz/chromium`, which ships a
+Chromium that can start on a slim host (puppeteer's own build cannot — no
+libnss3/libnspr4/libexpat1). A Japanese font is bundled with the server;
+without it every 漢字 renders as a box. Nothing to configure.
+
+Set `PUPPETEER_SKIP_DOWNLOAD=true` (the blueprint already does) to skip
+puppeteer's ~170MB Chromium download, which is unused on Linux.
+
+Note: Chromium is memory-hungry and free instances have 512MB. If the service
+restarts when emailing, that is an out-of-memory kill — the fix is a paid
+instance, or leaving PDF off and using the in-app 印刷 / PDF保存.
 
 ## Cost
 
@@ -120,5 +136,5 @@ Without these, the email endpoint captures the message and reports `delivery: "c
 |---|---|---|
 | Neon Postgres | Free | $0 |
 | Render web service | Free | $0 |
-| Brevo / Gmail SMTP | Free | $0 |
+| Resend (email) | Free | $0 |
 | **Total** | | **$0** |

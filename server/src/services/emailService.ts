@@ -1,15 +1,19 @@
 /**
  * Email delivery (requirements §3.4 — email the monthly PDF to the staff member).
  *
- * Three tiers, chosen automatically:
- *   1. `smtp`     — real credentials in SMTP_* (Brevo 300/day, or a Gmail app
- *                   password). Delivers to the real inbox.
- *   2. `ethereal` — no credentials: use Ethereal (https://ethereal.email), a
- *                   free, no-signup test SMTP. The message is really sent and
- *                   viewable at a returned preview URL — so the demo "just works"
- *                   without anyone configuring secrets.
- *   3. `capture`  — Ethereal unreachable (offline): fall back to capturing the
- *                   message so the flow still completes.
+ * Four tiers, chosen automatically:
+ *   1. `api`      — RESEND_API_KEY set: deliver over HTTPS.
+ *   2. `smtp`     — SMTP_* set: a normal mail server on port 587/465.
+ *   3. `ethereal` — nothing configured: Ethereal (https://ethereal.email), a
+ *                   free no-signup test SMTP. Really sent, viewable at a preview
+ *                   URL, so the demo works without anyone configuring secrets.
+ *   4. `capture`  — nothing reachable: capture the message so the flow completes.
+ *
+ * Why an HTTPS tier exists at all: hosts commonly block outbound SMTP to stop
+ * spam, and Render's free instances block ports 25, 465 AND 587 outright. Every
+ * SMTP option therefore dies the same way there — a connection timeout — no
+ * matter which provider's credentials you use. Port 443 is not blocked, so an
+ * HTTP API is the only path that delivers from that kind of host.
  */
 
 import nodemailer, { type Transporter } from 'nodemailer';
@@ -28,7 +32,7 @@ export interface EmailMessage {
   attachments?: EmailAttachment[];
 }
 
-export type DeliveryMode = 'smtp' | 'ethereal' | 'capture';
+export type DeliveryMode = 'api' | 'smtp' | 'ethereal' | 'capture';
 
 export interface SendResult {
   messageId: string;
@@ -43,6 +47,44 @@ export interface Mailer {
   send(message: EmailMessage): Promise<SendResult>;
 }
 
+/**
+ * A blocked outbound port shows up as a stalled connection, not a refusal, so
+ * without these the request hangs for ~2 minutes before failing. Fail fast and
+ * report the reason instead.
+ */
+const SMTP_TIMEOUTS = {
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 30_000,
+} as const;
+
+/** Deliver over HTTPS via Resend. Works where outbound SMTP ports are blocked. */
+async function sendViaResend(message: EmailMessage): Promise<SendResult> {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: config.smtp.from,
+      to: [message.to],
+      subject: message.subject,
+      html: message.html,
+      attachments: (message.attachments ?? []).map((a) => ({
+        filename: a.filename,
+        content: a.content.toString('base64'),
+      })),
+    }),
+  });
+
+  const body = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
+  if (!res.ok) {
+    throw new Error(`Resend rejected the message (${res.status}): ${body.message ?? 'unknown error'}`);
+  }
+  return { messageId: body.id ?? 'resend', mode: 'api' };
+}
+
 async function makeTransport(): Promise<{ transporter: Transporter; mode: DeliveryMode }> {
   if (config.smtp.user && config.smtp.pass) {
     return {
@@ -52,6 +94,7 @@ async function makeTransport(): Promise<{ transporter: Transporter; mode: Delive
         port: config.smtp.port,
         secure: config.smtp.port === 465,
         auth: { user: config.smtp.user, pass: config.smtp.pass },
+        ...SMTP_TIMEOUTS,
       }),
     };
   }
@@ -67,6 +110,7 @@ async function makeTransport(): Promise<{ transporter: Transporter; mode: Delive
         port: 587,
         secure: false,
         auth: { user: test.user, pass: test.pass },
+        ...SMTP_TIMEOUTS,
       }),
     };
   } catch {
@@ -76,7 +120,7 @@ async function makeTransport(): Promise<{ transporter: Transporter; mode: Delive
 }
 
 export function createMailer(): Mailer {
-  const configured = Boolean(config.smtp.user && config.smtp.pass);
+  const configured = Boolean(config.resendApiKey || (config.smtp.user && config.smtp.pass));
   // Transport is created lazily on first send (Ethereal setup is async / networked).
   let ready: Promise<{ transporter: Transporter; mode: DeliveryMode }> | null = null;
   const init = () => {
@@ -87,6 +131,9 @@ export function createMailer(): Mailer {
   return {
     live: configured,
     async send(message: EmailMessage): Promise<SendResult> {
+      // HTTPS first — the only tier that survives a host with SMTP blocked.
+      if (config.resendApiKey) return sendViaResend(message);
+
       const { transporter, mode } = await init();
       const info = await transporter.sendMail({
         from: config.smtp.from,

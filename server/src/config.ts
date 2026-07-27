@@ -27,6 +27,15 @@ export const config = {
   // Dev fallback keeps local/test runs frictionless; production must set a real secret.
   jwtSecret: requiredInProd('JWT_SECRET', 'dev-insecure-jwt-secret'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '12h',
+  // Resend's HTTP API. Preferred over SMTP_* because it uses port 443, which
+  // hosts do not block — Render's free instances block 25/465/587 outright.
+  //
+  // Read on access rather than captured at import: this decides which delivery
+  // path is taken, and the rest of the config is frozen before a test (or a
+  // process that loads .env late) can set it.
+  get resendApiKey(): string {
+    return process.env.RESEND_API_KEY ?? '';
+  },
   smtp: {
     host: process.env.SMTP_HOST ?? 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT ?? 587),
