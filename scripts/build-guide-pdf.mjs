@@ -77,6 +77,41 @@ function mdToHtml(md) {
   return out.join('\n');
 }
 
+/** Split a guide into its preamble (before the first ##) and its ## sections. */
+function splitSections(md) {
+  const lines = md.split(/\r?\n/);
+  const preamble = [];
+  const sections = [];
+  let cur = null;
+  for (const l of lines) {
+    if (/^##\s/.test(l)) { cur = [l]; sections.push(cur); }
+    else if (cur) cur.push(l);
+    else preamble.push(l);
+  }
+  return { preamble: preamble.join('\n'), sections: sections.map((s) => s.join('\n')) };
+}
+
+/**
+ * Interleave the two guides so each section's English sits directly under the
+ * Japanese, rather than the whole English guide following the whole Japanese one.
+ */
+function bilingualBody(jaMd, enMd) {
+  const ja = splitSections(jaMd);
+  const en = splitSections(enMd);
+  const parts = [
+    mdToHtml(ja.preamble),
+    `<div class="en">${mdToHtml(en.preamble)}</div>`,
+  ];
+  const n = Math.max(ja.sections.length, en.sections.length);
+  for (let i = 0; i < n; i++) {
+    parts.push('<section>');
+    if (ja.sections[i]) parts.push(mdToHtml(ja.sections[i]));
+    if (en.sections[i]) parts.push(`<div class="en">${mdToHtml(en.sections[i])}</div>`);
+    parts.push('</section>');
+  }
+  return parts.join('\n');
+}
+
 const fontB64 = readFileSync(resolve(root, 'server/assets/fonts/NotoSansJP.ttf')).toString('base64');
 
 function shell(title, bodyHtml) {
@@ -101,6 +136,17 @@ function shell(title, bodyHtml) {
   .lang-badge { display: inline-block; background: #1f3a93; color: #fff; font-size: 9pt;
     padding: 2px 10px; border-radius: 10px; margin-bottom: 10px; }
   .pagebreak { page-break-before: always; }
+  h2, h3 { page-break-after: avoid; }
+  /* Bilingual: the English translation under each Japanese section. */
+  section { margin-bottom: 4px; }
+  .en { border-left: 3px solid #b9c4e0; padding-left: 12px; margin: 4px 0 10px;
+    color: #33415c; }
+  .en h1 { font-size: 14pt; color: #33415c; border: none; margin: 4px 0 8px; }
+  .en h2 { font-size: 11.5pt; color: #33415c; border-left: none; padding-left: 0;
+    margin: 6px 0 6px; }
+  .en h3 { font-size: 10.5pt; color: #33415c; }
+  .en th { background: #f2f4f9; }
+  .en strong { color: #26314d; }
 </style></head><body>${bodyHtml}</body></html>`;
 }
 
@@ -115,9 +161,7 @@ const docs = [
   {
     file: 'USERGUIDE.bilingual.pdf',
     title: '操作マニュアル / User Guide',
-    body:
-      `<p class="lang-badge">日本語</p>${jaHtml}` +
-      `<div class="pagebreak"></div><p class="lang-badge">English</p>${enHtml}`,
+    body: bilingualBody(ja, en),
   },
 ];
 
