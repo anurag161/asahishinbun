@@ -134,6 +134,7 @@
     "transport": "Transport",
     "tax": "Tax",
     "net": "Net pay",
+    "lunchDays": "Lunch days",
     "details": "Details",
     "retagTitle": "Re-tag cost bucket (direct / indirect)",
     "retagHint": "Assign each work day to Tournament (direct) or Editorial (indirect). Its transport moves to the same bucket."

@@ -356,6 +356,8 @@ export function adminRouter(db: Db, mailer: Mailer): Router {
             taxYen: payroll.result.taxYen,
             grossYen: payroll.result.grossYen,
             netYen: payroll.result.netYen,
+            // 弁当代有無 rolls up to a day count on the monthly summary.
+            lunchDays: payroll.result.days.filter((d) => d.lunchProvided).length,
           };
         }),
       );

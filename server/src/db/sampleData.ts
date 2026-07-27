@@ -304,8 +304,11 @@ export async function seedDemoRoster(
       await db.query(
         `INSERT INTO attendance
            (staff_id, work_date, stadium_id, start_minutes, end_minutes,
-            break_taken, break_minutes, bucket, overtime_minutes, night_minutes, tournament)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 0, $9)`,
+            break_taken, break_minutes, bucket, overtime_minutes, night_minutes,
+            tournament, lunch_allowance)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 0, $9, $9)`,
+        // 弁当代有無 mirrors the tournament flag for the demo: tournament staff work
+        // >6h, so they qualify and show ○ — giving the 弁当代日数 column real values.
         [userId, date, stadiumId, startMin, endMin, person.shift.breakMin > 0,
           person.shift.breakMin, person.bucket, person.tournament],
       );

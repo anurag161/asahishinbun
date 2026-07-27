@@ -96,12 +96,13 @@ export function RecordsPage() {
               <th className="num">{t('records.transport')}</th>
               <th className="num">{t('records.tax')}</th>
               <th className="num">{t('records.net')}</th>
+              <th className="num">{t('records.lunchDays')}</th>
               <th className="num">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {!data || data.records.length === 0 ? (
-              <tr><td colSpan={8} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+              <tr><td colSpan={9} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
             ) : (
               data.records.map((r) => (
                 <tr key={r.staffId}>
@@ -112,6 +113,7 @@ export function RecordsPage() {
                   <td className="num">{yen(r.transportYen)}</td>
                   <td className="num">{yen(r.taxYen)}</td>
                   <td className="num">{yen(r.netYen)}</td>
+                  <td className="num">{r.lunchDays}</td>
                   <td className="num">
                     <button className="btn sm" onClick={() => openDetail(r.staffId)}>
                       {openStaff === r.staffId ? t('common.close') : t('records.details')}
