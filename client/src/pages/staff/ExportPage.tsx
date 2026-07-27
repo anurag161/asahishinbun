@@ -61,13 +61,15 @@ export function ExportPage() {
       const res = await api.post<{ to: string; delivery: string; pdfAttached: boolean; previewUrl?: string }>(
         `/api/documents/${type}/${me!.id}/email?month=${month}`,
       );
-      if (res.delivery === 'smtp') {
+      if (res.delivery === 'api' || res.delivery === 'smtp') {
+        // Real delivery — Brevo/Resend over HTTPS ('api') or a mail server ('smtp').
         notify(t('export.emailed', { to: res.to }), 'ok');
       } else if (res.previewUrl) {
         // Ethereal: the mail really sent — open the viewable preview.
         window.open(res.previewUrl, '_blank', 'noopener');
         notify(t('export.emailedPreview', { to: res.to }), 'ok');
       } else {
+        // 'capture' only: nothing was actually delivered.
         notify(t('export.emailedCaptured'), 'err');
       }
     } catch (err) {
