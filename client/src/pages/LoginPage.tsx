@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { api, ApiError } from '../api/client';
 import { setLanguage } from '../i18n';
+import { EyeIcon, EyeOffIcon } from '../components/icons';
 
 export function LoginPage() {
   const { t, i18n } = useTranslation();
@@ -11,6 +12,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   // The sample-staff login changes when DEMO_STAFF_EMAIL is set, so read the
@@ -66,14 +68,39 @@ export function LoginPage() {
         </div>
         <div className="field">
           <label htmlFor="password">{t('login.password')}</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{ width: '100%', paddingRight: 42 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={t(showPassword ? 'login.hidePassword' : 'login.showPassword')}
+              aria-pressed={showPassword}
+              title={t(showPassword ? 'login.hidePassword' : 'login.showPassword')}
+              style={{
+                position: 'absolute',
+                right: 4,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 6,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+              }}
+            >
+              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          </div>
         </div>
 
         <button className="btn primary" type="submit" disabled={busy} style={{ width: '100%' }}>

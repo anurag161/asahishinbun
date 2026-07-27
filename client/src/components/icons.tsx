@@ -39,3 +39,25 @@ export function TrashIcon() {
     </svg>
   );
 }
+
+/** 目 — reveal password. */
+export function EyeIcon() {
+  return (
+    <svg {...base}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+/** 目（斜線）— hide password. */
+export function EyeOffIcon() {
+  return (
+    <svg {...base}>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 5c6.5 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68" />
+      <path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.39-1.61" />
+      <path d="M14.12 14.12A3 3 0 1 1 9.88 9.88" />
+      <path d="M1 1l22 22" />
+    </svg>
+  );
+}

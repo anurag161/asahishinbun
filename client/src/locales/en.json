@@ -21,7 +21,9 @@
     "password": "Password",
     "submit": "Sign in",
     "error": "Invalid email or password",
-    "demo": "Demo accounts"
+    "demo": "Demo accounts",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "common": {
     "month": "Month",

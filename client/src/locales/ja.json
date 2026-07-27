@@ -21,7 +21,9 @@
     "password": "パスワード",
     "submit": "ログイン",
     "error": "メールアドレスまたはパスワードが正しくありません",
-    "demo": "デモ用アカウント"
+    "demo": "デモ用アカウント",
+    "showPassword": "パスワードを表示",
+    "hidePassword": "パスワードを隠す"
   },
   "common": {
     "month": "対象月",

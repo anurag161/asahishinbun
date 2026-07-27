@@ -27,7 +27,9 @@ describe('LoginPage', () => {
     );
 
     expect(await screen.findByLabelText(/メールアドレス|Email/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/パスワード|Password/)).toBeInTheDocument();
+    // selector:'input' disambiguates from the show/hide toggle, whose aria-label
+    // ("パスワードを表示") also contains "パスワード".
+    expect(screen.getByLabelText(/パスワード|Password/, { selector: 'input' })).toBeInTheDocument();
     expect(screen.getByText(/admin@example.com/)).toBeInTheDocument();
   });
 });
