@@ -96,7 +96,7 @@ export function RecordsPage() {
               <th className="num">{t('records.transport')}</th>
               <th className="num">{t('records.tax')}</th>
               <th className="num">{t('records.net')}</th>
-              <th className="num">{t('records.lunchDays')}</th>
+              <th className="num">{t('records.lunch')}</th>
               <th className="num">{t('common.actions')}</th>
             </tr>
           </thead>
@@ -113,7 +113,7 @@ export function RecordsPage() {
                   <td className="num">{yen(r.transportYen)}</td>
                   <td className="num">{yen(r.taxYen)}</td>
                   <td className="num">{yen(r.netYen)}</td>
-                  <td className="num">{r.lunchDays}</td>
+                  <td className="num">{yen(r.lunchYen)}</td>
                   <td className="num">
                     <button className="btn sm" onClick={() => openDetail(r.staffId)}>
                       {openStaff === r.staffId ? t('common.close') : t('records.details')}

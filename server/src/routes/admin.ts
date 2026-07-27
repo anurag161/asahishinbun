@@ -356,8 +356,9 @@ export function adminRouter(db: Db, mailer: Mailer): Router {
             taxYen: payroll.result.taxYen,
             grossYen: payroll.result.grossYen,
             netYen: payroll.result.netYen,
-            // 弁当代有無 rolls up to a day count on the monthly summary.
-            lunchDays: payroll.result.days.filter((d) => d.lunchProvided).length,
+            // 弁当代 cost for the month = Σ per-day 弁当代 (0 until the amount is set
+            // on the 単価設定 / Pay Rates page). Qualifying days = those marked ○.
+            lunchYen: payroll.result.days.reduce((sum, d) => sum + d.lunchYen, 0),
           };
         }),
       );

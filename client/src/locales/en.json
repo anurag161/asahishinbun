@@ -11,6 +11,7 @@
     "staff": "Staff",
     "accounts": "Accounts",
     "routes": "Route Fares",
+    "rates": "Pay Rates",
     "records": "All Records",
     "email": "Email Settings",
     "logout": "Log out"
@@ -125,6 +126,17 @@
     "noteAuto": "Generated automatically from the stations",
     "hint": "Register one-way fares between home and stadium stations"
   },
+  "rates": {
+    "title": "Pay Rates",
+    "subtitle": "Hourly, overtime, night and meal-allowance rates. Changing these reprices every document.",
+    "effectiveYear": "Effective year",
+    "hourly": "Hourly (JPY)",
+    "overtimeUnder60": "Overtime ≤60h (premium, JPY)",
+    "overtimeOver60": "Overtime >60h (premium, JPY)",
+    "night": "Night premium (JPY)",
+    "lunch": "Meal allowance (flat, JPY)",
+    "hint": "The meal allowance is ¥0 until confirmed. Enter an amount and save; it is added to the wage on qualifying (○) days."
+  },
   "records": {
     "title": "All Records",
     "subtitle": "Monthly totals for all staff",
@@ -134,7 +146,7 @@
     "transport": "Transport",
     "tax": "Tax",
     "net": "Net pay",
-    "lunchDays": "Lunch days",
+    "lunch": "Meal allowance",
     "details": "Details",
     "retagTitle": "Re-tag cost bucket (direct / indirect)",
     "retagHint": "Assign each work day to Tournament (direct) or Editorial (indirect). Its transport moves to the same bucket."

@@ -94,6 +94,6 @@ export interface RecordsResponse {
     taxYen: number;
     grossYen: number;
     netYen: number;
-    lunchDays: number;
+    lunchYen: number;
   }[];
 }
