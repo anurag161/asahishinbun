@@ -160,6 +160,22 @@ For confirming that document email is delivered.
 - **Send test** sends a throwaway message.
 - Clear the field and save to restore normal delivery to each staff member.
 
+**Trying email on the demo**
+
+Mail really is delivered from the demo (over HTTPS; this has been verified end to end). But the sample staff account's registered address is `staff@example.com`, which is **not a real address**, so nothing arrives unless you redirect it first:
+
+1. Open **Email Settings**, enter **your own address** and save.
+2. Go **straight** to **Monthly · Documents** and press **Email** on any document.
+3. Check your inbox — and your **spam folder**.
+
+- The mail carries the document as the **HTML body**, with the same document **attached as a PDF**.
+- On success the screen shows which address it went to.
+
+> **Note — the demo resets Email Settings**
+> The demo keeps no data on disk, so after a period of inactivity it sleeps and **wakes with Email Settings cleared**.
+> With the field empty, **Email** sends to `staff@example.com` — it reports success and nothing arrives.
+> Check the address is still there immediately before testing. A production deployment with a real database does not reset.
+
 ---
 
 ## 5. How the figures are calculated (reference)
