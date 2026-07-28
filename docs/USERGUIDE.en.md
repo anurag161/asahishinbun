@@ -199,7 +199,17 @@ Mail really is delivered from the demo (over HTTPS; this has been verified end t
 ## 6. Notes
 
 - Each screen opens on a **month that has data**; once you enter data it opens on the current month.
-- The demo environment resets its data when the server restarts, returning to the sample (June 2026).
+### Demo data is not saved (important)
+
+The demo keeps its database in the server's memory, so **whenever the server stops or restarts, everything entered is lost and it returns to the June 2026 sample.**
+
+- **When**: the free plan sleeps the server after a period of inactivity. The next visit wakes it — already reset. Deploys do the same.
+- **What**: not just attendance and expenses, but **stadiums, staff, route fares, pay rates, email settings, any accounts added and any passwords changed** all revert to the sample.
+- **Back to**: the June 2026 sample (¥131,300 wage / ¥185,152 net) and the demo logins.
+
+Treat anything entered in the demo as temporary. A walkthrough is most reliable done in one sitting, without long pauses.
+
+> A production deployment uses a permanent database, so **this reset does not happen there**. It is a demo-only limitation.
 - The 丙 daily tax table currently covers up to ¥14,800 per day; days above that are estimated, and the screens and payslip label them "**estimate**" (see section 5 — confirm official values).
 
 For questions, contact the vendor (MORABU Hanshin Kogyo).
