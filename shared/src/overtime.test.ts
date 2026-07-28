@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import { computeOvertimeMinutes, computePayroll } from './engine';
 import { DEFAULT_RATES, OVERTIME_MONTHLY_THRESHOLD_MINUTES } from './rates';
+import { lookupDailyTax } from './taxTable';
 import type { AttendanceDay } from './types';
 
 const H = 60;
@@ -80,10 +81,49 @@ describe('daily overtime past the 8h statutory day', () => {
   });
 
   it('carries the higher daily wage into the 丙 withholding, not just the total', () => {
-    const plain = computePayroll([day('2026-08-01', 8)]);
-    const long = computePayroll([day('2026-08-01', 9)]);
-    expect(long.days[0]!.dailyTaxYen).toBeGreaterThan(plain.days[0]!.dailyTaxYen);
-    expect(long.taxYen).toBe(long.days[0]!.dailyTaxYen);
+    // ¥10,400 → rank 71 → ¥22 (the golden master's own 8h figure).
+    const plain = computePayroll([day('2026-08-01', 8)]).days[0]!;
+    expect(plain.dailyWageYen).toBe(10_400);
+    expect(plain.taxRank).toBe(71);
+    expect(plain.dailyTaxYen).toBe(22);
+
+    // 10h → ¥13,650 → rank 103 = [¥13,600, ¥13,700) → ¥136. The premium is taxable,
+    // so overtime moves the day up the 丙 table; withholding is NOT left on the
+    // pre-overtime wage.
+    const long = computePayroll([day('2026-08-01', 10)]).days[0]!;
+    expect(long.dailyWageYen).toBe(13_650);
+    expect(long.taxRank).toBe(103);
+    expect(long.dailyTaxYen).toBe(136);
+  });
+
+  it('still withholds per day and sums, never on the monthly total', () => {
+    const two = computePayroll([day('2026-08-01', 10), day('2026-08-02', 10)]);
+    expect(two.taxYen).toBe(136 * 2);
+    expect(two.salaryYen).toBe(13_650 * 2);
+  });
+});
+
+describe('overtime pushes days past the transcribed 丙 table sooner than before', () => {
+  /**
+   * Documents a REAL limit, it doesn't bless it. The table is transcribed to
+   * ¥14,800/day; above that `lookupDailyTax` extrapolates and flags `provisional`,
+   * but computePayroll drops that flag, so the estimate is indistinguishable from
+   * an official figure. Paying overtime lowers the day length that reaches it from
+   * ~11h24m to ~10h45m — well inside a long stadium shift.
+   */
+  it('stays on transcribed rows through a 10h40m day', () => {
+    const d = computePayroll([day('2026-08-01', 10 + 40 / 60)]).days[0]!;
+    expect(d.dailyWageYen).toBe(14_734);
+    expect(d.dailyWageYen).toBeLessThan(14_800);
+  });
+
+  it('crosses into the PROVISIONAL estimate at 10h45m — flag currently dropped', () => {
+    const d = computePayroll([day('2026-08-01', 10.75)]).days[0]!;
+    expect(d.dailyWageYen).toBe(14_869);
+    expect(d.dailyWageYen).toBeGreaterThanOrEqual(14_800);
+    // The engine reports a tax figure with no indication it is an estimate.
+    expect(lookupDailyTax(d.dailyWageYen).provisional).toBe(true);
+    expect(d).not.toHaveProperty('taxProvisional');
   });
 });
 
