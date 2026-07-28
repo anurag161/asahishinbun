@@ -191,7 +191,17 @@ Mail really is delivered from the demo (over HTTPS; this has been verified end t
   - When a month contains such a day, **My Page**, **All Records** and the **payslip** show an "**estimate**" label naming the dates. No label means every figure came from the official rows.
   - With overtime paid, this starts at about **10h45m worked** (¥14,869 taxable). Without overtime it took about 11h24m.
   - **In a month showing the label, the withholding tax and net pay are not final.** Confirm the official figure before finalising.
-- **Transport**: registered **one-way fare × 2 (round trip) × work days**. Non-taxable.
+- **Transport**: the registered **one-way fare × 2 (round trip) × work days**, applied **automatically** when a work day is saved. Non-taxable.
+  - The amount comes straight from Route Fares. Each leg is recorded as its own line.
+  - If a fare is registered for the return direction it is used; otherwise the outbound fare is mirrored.
+  - With no route registered, the day is saved and transport is ¥0. Registering the route fills it in.
+
+> **Current scope — actual-cost reimbursement**
+> **"Actual cost, capped at the registered fare" cannot be entered from any screen.**
+> The cap itself is implemented and enforced internally — a claim above the registered fare is rejected — but there is **no screen for entering an actual cost**, so it is not usable in practice. Transport today is the automatic calculation above, and only that.
+>
+> The same applies to **personal phone use, per-diem, lodging and other** expenses: there is no entry screen yet, so **Per-diem / phone / other (attachment)** prints "該当なし" on the demo. The document itself is finished — only the input is missing.
+> In each case the calculation and the documents are already in place; adding the screen is what remains.
 - **Meal allowance**: a flat amount on days that are **during the tournament** and **exceed 6 worked hours**. Set the amount on Pay Rates (¥0 until set).
 
 ---
