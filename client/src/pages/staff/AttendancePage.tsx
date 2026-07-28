@@ -12,6 +12,13 @@ import { clock, parseTime, timeOfDay, yen } from '../../utils/format';
 /** The four fields a staff member can correct in-place on a saved day. */
 type EditForm = { date: string; stadiumId: number; start: string; end: string };
 
+/** Keep a number box on whole numbers inside its range; empty reads as 0. */
+function clampInt(raw: string, min: number, max: number): number {
+  const n = Math.floor(Number(raw));
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
 export function AttendancePage() {
   const { t } = useTranslation();
   const { notify } = useToast();
@@ -25,9 +32,14 @@ export function AttendancePage() {
   const [stadiumId, setStadiumId] = useState<number | ''>('');
   const [start, setStart] = useState('10:00');
   const [end, setEnd] = useState('19:00');
-  // Break is entered in HOURS (e.g. 1 or 0.5); stored as minutes.
+  // Break is entered as HOURS + MINUTES, never as decimal hours. A single
+  // decimal box accepted "1.25" as 1:15, but the client's paper 勤務表 writes
+  // breaks as 1:25 — so transcribing it silently under-deducted 10 minutes and
+  // overpaid the day. Two boxes make that mistake impossible to express.
   const [breakTaken, setBreakTaken] = useState(true);
-  const [breakHours, setBreakHours] = useState(1);
+  const [breakH, setBreakH] = useState(1);
+  const [breakM, setBreakM] = useState(0);
+  const breakMinutes = breakTaken ? breakH * 60 + breakM : 0;
   // 弁当代有無 — a ○/× the staff can only pick when the day exceeds 6 worked hours.
   const [lunchAllowance, setLunchAllowance] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -76,7 +88,7 @@ export function AttendancePage() {
         startMinutes: s,
         endMinutes: en,
         breakTaken,
-        breakMinutes: breakTaken ? Math.round(breakHours * 60) : 0,
+        breakMinutes,
         lunchAllowance: lunchEligible && lunchAllowance,
       });
       // The day is saved either way; only the auto-transport differs. Both are
@@ -178,9 +190,7 @@ export function AttendancePage() {
   const formStart = parseTime(start);
   const formEnd = parseTime(end);
   const formWorkedMin =
-    formStart !== null && formEnd !== null
-      ? formEnd - formStart - (breakTaken ? Math.round(breakHours * 60) : 0)
-      : 0;
+    formStart !== null && formEnd !== null ? formEnd - formStart - breakMinutes : 0;
   const lunchEligible = formWorkedMin > 6 * 60;
 
   return (
@@ -216,7 +226,7 @@ export function AttendancePage() {
             <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} required />
           </div>
           <div className="field field-break">
-            <label>{t('attendance.breakMinutes')}</label>
+            <label>{t('attendance.break')}</label>
             <div className="break-control">
               <input
                 type="checkbox"
@@ -227,11 +237,27 @@ export function AttendancePage() {
               <input
                 type="number"
                 min={0}
-                step={0.25}
-                value={breakHours}
+                max={23}
+                step={1}
+                value={breakH}
                 disabled={!breakTaken}
-                onChange={(e) => setBreakHours(Number(e.target.value))}
+                aria-label={`${t('attendance.break')} — ${t('attendance.unitHour')}`}
+                onChange={(e) => setBreakH(clampInt(e.target.value, 0, 23))}
               />
+              <span className="unit">{t('attendance.unitHour')}</span>
+              {/* Capped at 59 so 90 minutes can't be entered here and read as 1:90
+                  — the hours box is where anything past an hour belongs. */}
+              <input
+                type="number"
+                min={0}
+                max={59}
+                step={1}
+                value={breakM}
+                disabled={!breakTaken}
+                aria-label={`${t('attendance.break')} — ${t('attendance.unitMinute')}`}
+                onChange={(e) => setBreakM(clampInt(e.target.value, 0, 59))}
+              />
+              <span className="unit">{t('attendance.unitMinute')}</span>
             </div>
           </div>
           <div className="field field-lunch">

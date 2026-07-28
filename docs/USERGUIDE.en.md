@@ -55,12 +55,19 @@ Shows this month's totals (work days, total hours, transport, net pay, salary, g
 **Add a work day** (form at the top):
 
 1. Enter **Date**, **Stadium**, **Start** and **End**.
-2. **Break (hrs)**: tick **Break taken**, then enter the break in the field beside it as a **number of hours**.
-   - `1` = one hour, `0.5` = 30 minutes, `1.5` = 1 hour 30 minutes. **Not `60` (minutes), and not `1:00`.**
-   - The field steps in **0.25 (15 minutes)**.
+2. **Break**: tick **Break taken**, then enter **hours** and **minutes** in the two boxes beside it.
+
+   | Break | Enter |
+   | --- | --- |
+   | 1 hour | `1` h `0` m |
+   | 30 minutes | `0` h `30` m |
+   | **1 h 25 m** | **`1` h `25` m** |
+
+   - **Copy `1:25` straight off the paper timesheet into the two boxes.** Any number of minutes can be recorded.
+   - The minutes box takes 0–59; anything an hour or longer goes in the hours box.
+   - **Decimals cannot be entered.** With hours and minutes separated, there is no way to type `1.25` and have it mistaken for 1 h 25 m.
    - Untick the box to record no break (0 minutes).
-   - Entering `60` by mistake is read as 60 **hours**, and the day is rejected with "Worked time cannot be negative (check start/end/break)" rather than saved — it cannot quietly corrupt the pay.
-   - Note the asymmetry: you *enter* a number of hours, but the day tables and the timesheet PDF *display* h:mm (e.g. `1:00`).
+   - What you enter (hours + minutes) and what the screens and timesheet PDF show (`1:25`) mean the same thing — no conversion.
 3. **Meal allowance**: choose `○ (yes)` or `× (no)`.
    - Selectable **only when the day's worked time exceeds 6 hours**. On days of 6 hours or less it is disabled and shows "Not eligible (worked ≤ 6h)".
 4. Press **Add work day**.

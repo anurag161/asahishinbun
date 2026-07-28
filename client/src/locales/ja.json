@@ -66,7 +66,6 @@
     "start": "始業",
     "end": "終業",
     "breakTaken": "休憩あり",
-    "breakMinutes": "休憩（時間）",
     "break": "休憩",
     "lunch": "弁当代有無",
     "lunchYes": "○（有）",
@@ -81,7 +80,9 @@
     "noRoute": "勤務日を追加しました（登録区間が無いため交通費は未計上）",
     "duplicate": "{{date}} の勤務日はすでに登録されています",
     "existing": "登録済みの勤務日",
-    "expenses": "交通費・経費明細"
+    "expenses": "交通費・経費明細",
+    "unitHour": "時間",
+    "unitMinute": "分"
   },
   "export": {
     "title": "月次実績・書類",
