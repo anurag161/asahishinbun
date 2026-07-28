@@ -69,9 +69,22 @@ function mdToHtml(md) {
       continue;
     }
 
+    // Blockquote — used for the 要ご確認 callouts.
+    if (/^>\s?/.test(line)) {
+      const quoted = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) { quoted.push(lines[i].replace(/^>\s?/, '')); i++; }
+      out.push(`<blockquote>${quoted.map((x) => `<p>${inline(x)}</p>`).join('')}</blockquote>`);
+      continue;
+    }
+
     // Paragraph (gather until blank line).
     const para = [];
     while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^[#|>-]/.test(lines[i])) { para.push(lines[i]); i++; }
+    // A line that no branch above claimed and that the gather rejects on its
+    // first character would leave `i` untouched and spin here forever — which is
+    // exactly what an unhandled '>' did, to the tune of a 4GB heap. Emit it as
+    // plain text and move on: unknown syntax should degrade, never hang.
+    if (para.length === 0) { out.push(`<p>${inline(line)}</p>`); i++; continue; }
     out.push(`<p>${inline(para.join(' '))}</p>`);
   }
   return out.join('\n');
@@ -133,6 +146,10 @@ function shell(title, bodyHtml) {
   li { margin: 3px 0; }
   code { background: #f0f2f5; padding: 1px 5px; border-radius: 3px; font-size: 9.5pt; }
   strong { color: #10214f; }
+  /* 要ご確認 callouts — visibly an open question, not settled instruction. */
+  blockquote { margin: 10px 0; padding: 8px 12px; border-left: 4px solid #e0c07a;
+    background: #fdf6e3; page-break-inside: avoid; }
+  blockquote p { margin: 3px 0; font-size: 9.5pt; }
   .lang-badge { display: inline-block; background: #1f3a93; color: #fff; font-size: 9pt;
     padding: 2px 10px; border-radius: 10px; margin-bottom: 10px; }
   .pagebreak { page-break-before: always; }

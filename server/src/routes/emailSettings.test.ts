@@ -8,9 +8,10 @@
  */
 
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeTestContext, type TestContext } from '../testing/harness';
 import type { Mailer } from '../services/emailService';
+import type { PdfRenderer } from '../pdf/pdfRenderer';
 
 let ctx: TestContext;
 let sent: { to: string; subject: string }[];
@@ -24,9 +25,20 @@ const mailer: Mailer = {
   },
 };
 
+/**
+ * Emailing a document attaches a PDF, so without this the suite fell through to
+ * the real renderer and launched Chromium — seconds per test, and the first two
+ * cases (which pay the cold launch) intermittently blew the 5s timeout. These
+ * tests are about WHO the mail goes to; the bytes are irrelevant.
+ */
+const pdf: PdfRenderer = {
+  available: vi.fn(async () => true),
+  render: vi.fn(async () => Buffer.from('%PDF-1.4 stub-pdf-bytes')),
+};
+
 beforeEach(async () => {
   sent = [];
-  ctx = await makeTestContext({ mailer });
+  ctx = await makeTestContext({ mailer, pdf });
 });
 
 const emailPayslip = () =>
