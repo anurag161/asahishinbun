@@ -9,6 +9,15 @@ export interface User {
   role: Role;
 }
 
+/**
+ * What GET /api/auth/me returns: the user, plus the month the app should open on.
+ * The month travels with the session so the client knows it before any page
+ * mounts, instead of every screen painting on today's (often empty) month first.
+ */
+export interface SessionUser extends User {
+  defaultMonth?: string;
+}
+
 export interface Stadium {
   id: number;
   name: string;

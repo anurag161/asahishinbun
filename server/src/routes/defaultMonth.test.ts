@@ -66,3 +66,72 @@ describe('GET /api/default-month', () => {
     await request(ctx.app).get('/api/default-month').expect(401);
   });
 });
+
+/**
+ * The month has to arrive WITH the session. Resolved separately, every page
+ * painted on today's empty month first and only corrected after a round trip —
+ * which on a fresh demo reads as "nothing works", and on a failed request stayed
+ * that way silently.
+ */
+describe('the month ships with the session', () => {
+  it('login carries the month to open on', async () => {
+    const res = await request(ctx.app)
+      .post('/api/auth/login')
+      .send({ email: 'staff@example.com', password: 'staff123' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeTruthy();
+    if (thisMonth() !== '2026-06') {
+      expect(res.body.defaultMonth).toBe('2026-06');
+      expect(res.body.defaultMonth).not.toBe(thisMonth());
+    }
+  });
+
+  it('a restored session carries it too, so a refresh opens on the same month', async () => {
+    const res = await request(ctx.app).get('/api/auth/me').set(auth(ctx.staffToken));
+
+    expect(res.status).toBe(200);
+    if (thisMonth() !== '2026-06') {
+      expect(res.body.defaultMonth).toBe('2026-06');
+    }
+  });
+
+  it('gives an admin the org-wide month, not their own empty one', async () => {
+    const res = await request(ctx.app).get('/api/auth/me').set(auth(ctx.adminToken));
+
+    expect(res.body.role).toBe('admin');
+    if (thisMonth() !== '2026-06') {
+      expect(res.body.defaultMonth).toBe('2026-06');
+    }
+  });
+
+  it('agrees with the standalone endpoint — one rule, not two', async () => {
+    for (const token of [ctx.staffToken, ctx.adminToken]) {
+      const [session, endpoint] = await Promise.all([
+        request(ctx.app).get('/api/auth/me').set(auth(token)),
+        request(ctx.app).get('/api/default-month').set(auth(token)),
+      ]);
+      expect(session.body.defaultMonth).toBe(endpoint.body.month);
+    }
+  });
+
+  it('follows the data: entering a day this month moves the session month to it', async () => {
+    const now = thisMonth();
+    const stadiums = await request(ctx.app).get('/api/stadiums').set(auth(ctx.staffToken));
+    await request(ctx.app)
+      .post('/api/attendance')
+      .set(auth(ctx.staffToken))
+      .send({
+        date: `${now}-15`,
+        stadiumId: stadiums.body[0].id,
+        startMinutes: 600,
+        endMinutes: 1080,
+        breakTaken: true,
+        breakMinutes: 60,
+      })
+      .expect(201);
+
+    const res = await request(ctx.app).get('/api/auth/me').set(auth(ctx.staffToken));
+    expect(res.body.defaultMonth).toBe(now);
+  });
+});
