@@ -63,7 +63,8 @@ Shows this month's totals (work days, total hours, transport, net pay, salary, g
 
 **Registered days** (table):
 
-- Columns: date, stadium, start, end, worked, **Meal allowance (○/×)**.
+- Columns: date, stadium, start, end, worked, **overtime**, **Meal allowance (○/×)**.
+- **Overtime** shows the time worked past 8 hours, calculated for you ("—" when there is none).
 - Per row: **pencil icon** = edit that day, **trash icon** = delete.
 
 **Transport & expense lines**: shows the auto transport plus any manual expenses (personal phone, per-diem, lodging, other).
@@ -95,7 +96,9 @@ Top menu: **All Records / Stadiums / Staff / Accounts / Route Fares / Pay Rates 
 
 ### 4-1. All Records
 
-Monthly totals for every staff member (work days, worked, salary, transport, tax, net pay, **meal allowance**).
+Monthly totals for every staff member (work days, worked, **overtime**, salary, transport, tax, net pay, **meal allowance**).
+
+- The **overtime** column shows the month's hours past 8h/day with the **premium (¥)** they earned underneath.
 
 - The **meal-allowance** column is qualifying days (○) × the **Pay Rates meal amount**. While the amount is unset (¥0) it shows ¥0.
 - **Details** on a row opens that person's **per-day breakdown**. There you can re-tag each day as **Tournament (direct) / Editorial (indirect)** — its transport moves to the same bucket. The **Meal allowance (○/×)** is shown too.
@@ -124,7 +127,12 @@ For confirming that document email is delivered.
 
 ## 5. How the figures are calculated (reference)
 
-- **Salary**: sum of "worked hours × hourly rate" for each day (plus taxable expenses).
+- **Salary**: sum of "worked hours × hourly rate" for each day (plus the overtime premium and any taxable expenses).
+- **Overtime**: applied automatically to **anything worked past 8 hours in a day** — nobody enters it.
+  - Example: 9 hours worked → `¥1,300 × 8h + ¥1,300 × 1.25 × 1h = ¥12,025`
+  - The invoice itemises it as "hourly (all worked time)" plus "overtime (premium)".
+  - Past **60 overtime hours in a month**, the remainder moves to the higher premium (1.5× by default).
+  - Breaks don't count as worked time: 10:00–19:00 with a 1h break is 8 hours worked, so no overtime.
 - **Withholding tax**: looked up **per day** in the daily table (category 丙) and summed — not applied to the monthly total. It starts once a day's taxable amount exceeds about ¥9,800.
 - **Transport**: registered **one-way fare × 2 (round trip) × work days**. Non-taxable.
 - **Meal allowance**: a flat amount on days that are **during the tournament** and **exceed 6 worked hours**. Set the amount on Pay Rates (¥0 until set).

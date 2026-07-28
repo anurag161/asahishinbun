@@ -72,11 +72,33 @@ export function RatesPage() {
     }
   }
 
-  const money: { k: keyof RatesForm; label: string }[] = [
+  /**
+   * The premiums are stored as 割増分 (the extra ¥/h on top of the hourly rate), so
+   * ¥1,300 + ¥325 is the familiar 1.25×. Nothing keeps them in step automatically —
+   * spell the multiplier out so an admin who raises 時給 can see the premium drift.
+   */
+  function multiplierNote(premiumYen: number): string | null {
+    if (!form.hourlyYen || !premiumYen) return null;
+    const effective = form.hourlyYen + premiumYen;
+    return t('rates.multiplier', {
+      x: (effective / form.hourlyYen).toFixed(2).replace(/\.?0+$/, ''),
+      effective: effective.toLocaleString('ja-JP'),
+    });
+  }
+
+  const money: { k: keyof RatesForm; label: string; note?: string | null }[] = [
     { k: 'hourlyYen', label: t('rates.hourly') },
-    { k: 'overtimeUnder60Yen', label: t('rates.overtimeUnder60') },
-    { k: 'overtimeOver60Yen', label: t('rates.overtimeOver60') },
-    { k: 'nightYen', label: t('rates.night') },
+    {
+      k: 'overtimeUnder60Yen',
+      label: t('rates.overtimeUnder60'),
+      note: multiplierNote(form.overtimeUnder60Yen),
+    },
+    {
+      k: 'overtimeOver60Yen',
+      label: t('rates.overtimeOver60'),
+      note: multiplierNote(form.overtimeOver60Yen),
+    },
+    { k: 'nightYen', label: t('rates.night'), note: multiplierNote(form.nightYen) },
     { k: 'lunchYen', label: t('rates.lunch') },
   ];
 
@@ -92,14 +114,16 @@ export function RatesPage() {
           <label>{t('rates.effectiveYear')}</label>
           <input type="text" value={form.effectiveYear} onChange={set('effectiveYear')} placeholder="令和8年" />
         </div>
-        {money.map(({ k, label }) => (
+        {money.map(({ k, label, note }) => (
           <div className="field" key={k} style={{ marginBottom: 12 }}>
             <label>{label}</label>
             <input type="number" min={0} value={form[k] as number} onChange={set(k)} />
+            {note && <span className="field-note">{note}</span>}
           </div>
         ))}
         <button className="btn primary" type="submit" disabled={busy}>{t('common.save')}</button>
-        <p className="muted" style={{ fontSize: 12, margin: '12px 2px 0' }}>{t('rates.hint')}</p>
+        <p className="muted" style={{ fontSize: 12, margin: '12px 2px 0' }}>{t('rates.overtimeHint')}</p>
+        <p className="muted" style={{ fontSize: 12, margin: '8px 2px 0' }}>{t('rates.hint')}</p>
       </form>
     </>
   );

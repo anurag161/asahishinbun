@@ -97,13 +97,14 @@ export function MyPage() {
                   <th className="num">{t('attendance.end')}</th>
                   <th className="num">{t('attendance.break')}</th>
                   <th className="num">{t('attendance.worked')}</th>
+                  <th className="num">{t('attendance.overtime')}</th>
                   <th className="num">{t('mypage.salary')}</th>
                   <th className="num">{t('mypage.tax')}</th>
                 </tr>
               </thead>
               <tbody>
                 {summary.days.length === 0 ? (
-                  <tr><td colSpan={7} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+                  <tr><td colSpan={8} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
                 ) : (
                   summary.days.map((d) => (
                     <tr key={d.date}>
@@ -112,6 +113,7 @@ export function MyPage() {
                       <td className="num">{timeOfDay(d.endMinutes)}</td>
                       <td className="num">{d.breakMinutes ? clock(d.breakMinutes) : '—'}</td>
                       <td className="num">{clock(d.workedMinutes)}</td>
+                      <td className="num">{d.overtimeMinutes ? clock(d.overtimeMinutes) : '—'}</td>
                       <td className="num">{yen(d.dailyWageYen)}</td>
                       <td className="num">{yen(d.dailyTaxYen)}</td>
                     </tr>

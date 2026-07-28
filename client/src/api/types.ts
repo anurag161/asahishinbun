@@ -89,6 +89,8 @@ export interface RecordsResponse {
     email: string;
     workDays: number;
     totalWorkedMinutes: number;
+    totalOvertimeMinutes: number;
+    overtimeYen: number;
     salaryYen: number;
     transportYen: number;
     taxYen: number;

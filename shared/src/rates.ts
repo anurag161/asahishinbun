@@ -15,6 +15,17 @@ export const DEFAULT_RATES: RateConfig = {
   lunchYen: 0,
 };
 
+/**
+ * 法定労働時間 — the daily statutory hours. Anything worked beyond this on a single
+ * day is 時間外勤務 and earns the overtime premium on top of the plain hourly wage:
+ *
+ *   day pay = ¥1,300 × 8h + ¥1,300 × 1.25 × (worked − 8h)
+ *
+ * which the engine bills as base (¥1,300 × ALL worked minutes) + 割増分 (¥325/h),
+ * exactly how the client's 請求明細書 itemises it.
+ */
+export const DAILY_OVERTIME_THRESHOLD_MINUTES = 8 * 60; // 8 hours
+
 /** Monthly overtime threshold (minutes) where the rate steps from ≤60h to >60h. */
 export const OVERTIME_MONTHLY_THRESHOLD_MINUTES = 60 * 60; // 60 hours
 

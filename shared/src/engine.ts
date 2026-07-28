@@ -27,6 +27,7 @@ import { COST_BUCKETS } from './types';
 import { roundYen, wageForMinutes } from './money';
 import { lookupDailyTax, TAX_TABLE_REIWA8 } from './taxTable';
 import {
+  DAILY_OVERTIME_THRESHOLD_MINUTES,
   DEFAULT_RATES,
   LUNCH_MIN_WORKED_MINUTES,
   OVERTIME_MONTHLY_THRESHOLD_MINUTES,
@@ -55,6 +56,33 @@ export function computeWorkedMinutes(day: AttendanceDay): number {
   return worked;
 }
 
+/**
+ * 時間外勤務時間 for one day.
+ *
+ * Overtime is DERIVED, not typed in: any minute worked beyond the 8h statutory day
+ * is overtime. Staff only ever enter 始業/終業/休憩, so making them also declare their
+ * overtime would mean the premium silently went unpaid whenever they didn't — which
+ * is exactly what was happening.
+ *
+ * A stored `overtimeMinutes` still acts as a FLOOR, so an admin can recognise
+ * overtime the clock doesn't show (e.g. 休日出勤 hours agreed after the fact) without
+ * that being double-counted against the derived figure. It can never exceed the
+ * day's worked time.
+ */
+export function computeOvertimeMinutes(day: AttendanceDay, workedMinutes?: number): number {
+  return overtimeMinutesFor(workedMinutes ?? computeWorkedMinutes(day), day.overtimeMinutes);
+}
+
+/**
+ * The same rule over plain numbers, so the UI can label a raw attendance row with
+ * the overtime it will be paid for without restating the rule (or reaching for a
+ * `DayComputation` it doesn't have yet).
+ */
+export function overtimeMinutesFor(workedMinutes: number, declaredMinutes = 0): number {
+  const statutory = Math.max(0, workedMinutes - DAILY_OVERTIME_THRESHOLD_MINUTES);
+  return Math.min(workedMinutes, Math.max(statutory, declaredMinutes ?? 0));
+}
+
 export function computePayroll(
   attendance: AttendanceDay[],
   expenses: ExpenseLine[] = [],
@@ -80,9 +108,11 @@ export function computePayroll(
 
     const baseWageYen = wageForMinutes(workedMinutes, rates.hourlyYen);
 
-    // Overtime premium: split across the monthly 60h boundary at ≤60h / >60h rates.
-    const otMinutes = day.overtimeMinutes ?? 0;
-    const overtimeWageYen = overtimePremium(otMinutes, cumulativeOtMinutes, rates);
+    // Overtime premium on everything past the 8h statutory day, split across the
+    // monthly 60h boundary at the ≤60h / >60h rates.
+    const otMinutes = computeOvertimeMinutes(day, workedMinutes);
+    const ot = overtimePremium(otMinutes, cumulativeOtMinutes, rates);
+    const overtimeWageYen = ot.underYen + ot.overYen;
     cumulativeOtMinutes += otMinutes;
 
     // Night premium.
@@ -112,10 +142,14 @@ export function computePayroll(
       endMinutes: day.endMinutes,
       breakMinutes: day.breakMinutes,
       overtimeMinutes: otMinutes,
+      overtimeUnderMinutes: ot.underMinutes,
+      overtimeOverMinutes: ot.overMinutes,
       nightMinutes,
       workedMinutes,
       baseWageYen,
       overtimeWageYen,
+      overtimeUnderYen: ot.underYen,
+      overtimeOverYen: ot.overYen,
       nightWageYen,
       lunchYen,
       lunchProvided,
@@ -162,22 +196,29 @@ export function computePayroll(
   };
 }
 
+/**
+ * Split a day's overtime across the monthly 60h step and price each part at the
+ * client's own 単価 lines (割増分, i.e. the premium ON TOP of the hourly wage the
+ * base already pays on those minutes).
+ */
 function overtimePremium(
   otMinutes: number,
   priorCumulativeOt: number,
   rates: RateConfig,
-): number {
-  if (otMinutes <= 0) return 0;
+): { underMinutes: number; overMinutes: number; underYen: number; overYen: number } {
+  if (otMinutes <= 0) return { underMinutes: 0, overMinutes: 0, underYen: 0, overYen: 0 };
 
   const threshold = OVERTIME_MONTHLY_THRESHOLD_MINUTES;
   const beforeThreshold = Math.max(0, threshold - priorCumulativeOt);
-  const under = Math.min(otMinutes, beforeThreshold);
-  const over = otMinutes - under;
+  const underMinutes = Math.min(otMinutes, beforeThreshold);
+  const overMinutes = otMinutes - underMinutes;
 
-  return (
-    wageForMinutes(under, rates.overtimeUnder60Yen) +
-    wageForMinutes(over, rates.overtimeOver60Yen)
-  );
+  return {
+    underMinutes,
+    overMinutes,
+    underYen: wageForMinutes(underMinutes, rates.overtimeUnder60Yen),
+    overYen: wageForMinutes(overMinutes, rates.overtimeOver60Yen),
+  };
 }
 
 function emptyBucketMap(): Record<CostBucket, { wageYen: number; expenseYen: number }> {

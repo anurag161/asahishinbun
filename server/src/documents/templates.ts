@@ -361,7 +361,10 @@ export function buildAllowancesHtml(ctx: DocumentContext): string {
 // --- 請求明細書 (invoice) ---
 interface InvoiceAgg {
   baseWage: number;
-  otWage: number;
+  otUnderWage: number;
+  otOverWage: number;
+  otUnderMinutes: number;
+  otOverMinutes: number;
   nightWage: number;
   lunch: number;
   phone: number;
@@ -377,7 +380,10 @@ function invoiceAgg(payroll: PayrollResult): InvoiceAgg {
   const e = payroll.expenseByCategory;
   return {
     baseWage: sum((d) => d.baseWageYen),
-    otWage: sum((d) => d.overtimeWageYen),
+    otUnderWage: sum((d) => d.overtimeUnderYen),
+    otOverWage: sum((d) => d.overtimeOverYen),
+    otUnderMinutes: sum((d) => d.overtimeUnderMinutes),
+    otOverMinutes: sum((d) => d.overtimeOverMinutes),
     nightWage: sum((d) => d.nightWageYen),
     lunch: sum((d) => d.lunchYen),
     phone: e.phone,
@@ -386,6 +392,11 @@ function invoiceAgg(payroll: PayrollResult): InvoiceAgg {
     lodging: e.lodging,
     other: e.other,
   };
+}
+
+/** 時間外 note: unit price, plus the hours it was charged on once there are any. */
+function otNote(unitYen: number, minutes: number): string {
+  return `@${num(unitYen)}円${minutes ? ` × ${clock(minutes)}（8時間超）` : ''}`;
 }
 
 function line(label: string, value: number, note = ''): string {
@@ -406,8 +417,8 @@ export function buildInvoiceHtml(ctx: DocumentContext): string {
     <div class="section-title">給料（課税分）</div>
     <table class="grid"><tbody>
       ${line('時給', a.baseWage, `@${num(ctx.rates.hourlyYen)}円 × ${hours}`)}
-      ${line('時間外（60h以下）', a.otWage, `@${num(ctx.rates.overtimeUnder60Yen)}円`)}
-      ${line('時間外（60h超）', 0, `@${num(ctx.rates.overtimeOver60Yen)}円`)}
+      ${line('時間外（60h以下）', a.otUnderWage, otNote(ctx.rates.overtimeUnder60Yen, a.otUnderMinutes))}
+      ${line('時間外（60h超）', a.otOverWage, otNote(ctx.rates.overtimeOver60Yen, a.otOverMinutes))}
       ${line('深夜割増', a.nightWage, `@${num(ctx.rates.nightYen)}円`)}
       ${line('弁当代（定額）', a.lunch)}
       ${line('私有携帯電話使用料', a.phone)}

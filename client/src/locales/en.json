@@ -71,6 +71,7 @@
     "lunchNo": "× (no)",
     "lunchIneligible": "Not eligible (worked ≤ 6h)",
     "worked": "Worked",
+    "overtime": "Overtime",
     "bucket": "Cost bucket",
     "transportAuto": "Transport (auto)",
     "addDay": "Add work day",
@@ -135,7 +136,9 @@
     "overtimeOver60": "Overtime >60h (premium, JPY)",
     "night": "Night premium (JPY)",
     "lunch": "Meal allowance (flat, JPY)",
-    "hint": "The meal allowance is ¥0 until confirmed. Enter an amount and save; it is added to the wage on qualifying (○) days."
+    "multiplier": "= {{x}}× hourly (¥{{effective}}/h)",
+    "hint": "The meal allowance is ¥0 until confirmed. Enter an amount and save; it is added to the wage on qualifying (○) days.",
+    "overtimeHint": "Overtime applies automatically to anything worked past 8 hours a day — nobody enters it. The premiums are separate unit prices, so review them whenever you change the hourly rate."
   },
   "records": {
     "title": "All Records",

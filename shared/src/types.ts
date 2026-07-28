@@ -76,7 +76,11 @@ export interface AttendanceDay {
    * NOT deducted from worked time.
    */
   lunchAllowance?: boolean;
-  /** 時間外勤務時間 — overtime minutes for the day (default 0; not staff-entered). */
+  /**
+   * 時間外勤務時間 — an OPTIONAL floor on the day's overtime, not the overtime itself.
+   * The engine always derives overtime from the clock (worked − 8h); this only raises
+   * it when overtime was agreed that the clock doesn't show. Default 0, not staff-entered.
+   */
   overtimeMinutes?: number;
   /** 深夜割増分 — night-premium minutes, 22:00 以降 (default 0). */
   nightMinutes?: number;
@@ -109,14 +113,24 @@ export interface DayComputation {
   endMinutes: number;
   /** 休憩時間 — minutes (as entered). */
   breakMinutes: number;
-  /** 時間外勤務時間 — minutes (as entered; 0 when none). */
+  /** 時間外勤務時間 — minutes past the 8h statutory day (0 when none). */
   overtimeMinutes: number;
+  /** The part of `overtimeMinutes` falling below the monthly 60h step. */
+  overtimeUnderMinutes: number;
+  /** The part above it. */
+  overtimeOverMinutes: number;
   /** 深夜割増分 — minutes (as entered; 0 when none). */
   nightMinutes: number;
   /** 実働時間（除休憩） = end − start − break. */
   workedMinutes: number;
+  /** 時給分 — hourly wage on ALL worked minutes, overtime hours included. */
   baseWageYen: number;
+  /** 時間外割増分 — the premium on top of base = overtimeUnderYen + overtimeOverYen. */
   overtimeWageYen: number;
+  /** 時間外（60h以下）割増分 — the part of the premium below the monthly 60h step. */
+  overtimeUnderYen: number;
+  /** 時間外（60h超）割増分 — the part above it. */
+  overtimeOverYen: number;
   nightWageYen: number;
   lunchYen: number;
   /** 弁当代有無 — true when lunch qualified (declared ○ AND worked > 6h). Drives the 有/無 column. */

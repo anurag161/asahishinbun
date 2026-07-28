@@ -351,6 +351,10 @@ export function adminRouter(db: Db, mailer: Mailer): Router {
             email: s.email,
             workDays: payroll.workDays,
             totalWorkedMinutes: payroll.result.workedMinutesTotal,
+            // 時間外 — minutes past the 8h statutory day, and the 割増分 they earned
+            // (the plain hourly part is already inside salaryYen).
+            totalOvertimeMinutes: payroll.result.days.reduce((s, d) => s + d.overtimeMinutes, 0),
+            overtimeYen: payroll.result.days.reduce((s, d) => s + d.overtimeWageYen, 0),
             salaryYen: payroll.result.salaryYen,
             transportYen: payroll.result.transportYen,
             taxYen: payroll.result.taxYen,
