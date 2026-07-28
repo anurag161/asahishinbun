@@ -12,6 +12,14 @@ import { clock, parseTime, timeOfDay, yen } from '../../utils/format';
 /** The four fields a staff member can correct in-place on a saved day. */
 type EditForm = { date: string; stadiumId: number; start: string; end: string };
 
+/**
+ * Expense types a staff member enters by hand. 'transport' is a valid category
+ * server-side but is NOT offered here: it is generated from the registered fare
+ * when a work day is saved, so a manual line would double-claim the journey.
+ */
+const MANUAL_CATEGORIES = ['perdiem', 'phone', 'lodging', 'other'] as const;
+type ManualCategory = (typeof MANUAL_CATEGORIES)[number];
+
 /** Keep a number box on whole numbers inside its range; empty reads as 0. */
 function clampInt(raw: string, min: number, max: number): number {
   const n = Math.floor(Number(raw));
@@ -44,6 +52,12 @@ export function AttendancePage() {
   const [lunchAllowance, setLunchAllowance] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // Manual expense form (私有携帯 / 出張日当 / 宿泊実費 / その他).
+  const [exDate, setExDate] = useState(`${month}-01`);
+  const [exCategory, setExCategory] = useState<ManualCategory>('perdiem');
+  const [exAmount, setExAmount] = useState('');
+  const [exNote, setExNote] = useState('');
+
   // Inline row editing (pencil). null = no row open for edit.
   const [editId, setEditId] = useState<number | null>(null);
   const [edit, setEdit] = useState<EditForm>({ date: '', stadiumId: 0, start: '', end: '' });
@@ -68,6 +82,7 @@ export function AttendancePage() {
   }, []);
   useEffect(() => {
     setDate(`${month}-01`);
+    setExDate(`${month}-01`);
     reload();
   }, [month, reload]);
 
@@ -110,6 +125,44 @@ export function AttendancePage() {
       notify(msg, 'err');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function addExpense(e: FormEvent) {
+    e.preventDefault();
+    const amountYen = Math.round(Number(exAmount));
+    if (!Number.isFinite(amountYen) || amountYen < 0) {
+      notify(t('expense.amount'), 'err');
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.post('/api/expenses', {
+        date: exDate,
+        category: exCategory,
+        amountYen,
+        description: exNote.trim() || undefined,
+      });
+      // Clear the amount and note but keep date and type — entering several
+      // lines for one trip is the common case.
+      setExAmount('');
+      setExNote('');
+      notify(t('expense.added'), 'ok');
+      reload();
+    } catch (err) {
+      notify(err instanceof ApiError ? err.message : String(err), 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeExpense(id: number) {
+    if (!confirm(t('common.confirmDelete'))) return;
+    try {
+      await api.del(`/api/expenses/${id}`);
+      reload();
+    } catch (err) {
+      notify(err instanceof ApiError ? err.message : String(err), 'err');
     }
   }
 
@@ -379,26 +432,86 @@ export function AttendancePage() {
       </div>
 
       <h2 style={{ margin: '4px 0 10px' }}>{t('attendance.expenses')}</h2>
+
+      {/* 交通費 is deliberately absent from the type list: it is generated from the
+          registered fare when a day is saved, so offering it here would let the
+          same journey be claimed twice. */}
+      <form className="card" onSubmit={addExpense} style={{ marginBottom: 14 }}>
+        <div className="row">
+          <div className="field">
+            <label>{t('attendance.date')}</label>
+            <input type="date" value={exDate} onChange={(e) => setExDate(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label>{t('expense.category')}</label>
+            <select value={exCategory} onChange={(e) => setExCategory(e.target.value as ManualCategory)}>
+              {MANUAL_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{t(`expense.${c}`)}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field" style={{ maxWidth: 130 }}>
+            <label>{t('expense.amount')}</label>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={exAmount}
+              onChange={(e) => setExAmount(e.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label>{t('expense.description')}</label>
+            <input value={exNote} onChange={(e) => setExNote(e.target.value)} />
+          </div>
+          <button className="btn primary" type="submit" disabled={busy}>{t('expense.add')}</button>
+        </div>
+        <p className="muted" style={{ fontSize: 12, margin: '10px 2px 0' }}>{t('expense.hint')}</p>
+        {exCategory === 'phone' && (
+          <p className="muted" style={{ fontSize: 12, margin: '4px 2px 0' }}>{t('expense.taxableNote')}</p>
+        )}
+      </form>
+
       <div className="table-wrap">
         <table className="data">
           <thead>
             <tr>
               <th>{t('attendance.date')}</th>
-              <th>{t('routes.mode')}</th>
+              <th>{t('expense.category')}</th>
+              <th>{t('expense.description')}</th>
               <th className="num">{t('common.yen')}</th>
-              <th></th>
+              <th className="num">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {expenses.length === 0 ? (
-              <tr><td colSpan={4} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
+              <tr><td colSpan={5} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
             ) : (
               expenses.map((e) => (
                 <tr key={e.id}>
                   <td>{e.expense_date}</td>
-                  <td>{e.description ?? e.category}</td>
+                  <td>
+                    {e.source === 'auto' ? t('expense.auto') : t(`expense.${e.category}`)}
+                  </td>
+                  <td>{e.description ?? '—'}</td>
                   <td className="num">{yen(e.amount_yen)}</td>
-                  <td>{e.source === 'auto' && <span className="pill auto">auto</span>}</td>
+                  <td className="num">
+                    {/* Auto transport is owned by the work day — the API refuses to
+                        delete it here, so don't offer a button that cannot work. */}
+                    {e.source === 'auto' ? (
+                      <span className="pill auto">auto</span>
+                    ) : (
+                      <button
+                        className="btn sm icon danger"
+                        onClick={() => removeExpense(e.id)}
+                        aria-label={t('common.delete')}
+                        title={t('common.delete')}
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
