@@ -119,6 +119,12 @@ On each document card:
 - **Email** — send it, with the PDF attached, to your registered address (or the admin's test address, if set)
 - The document on screen can also be saved via **Print / Save as PDF**.
 
+**About PDF (it works on the demo)**
+
+- The demo deployment (Render) generates PDFs **server-side**. A Japanese font (Noto Sans JP) is bundled, so kanji and kana render properly rather than as boxes. Each document takes **under about 5 seconds**.
+- When the footer reads **"PDF: server-side ready"**, the PDF button is live.
+- On any deployment where the server cannot generate PDFs, pressing the button shows **"use the browser's Save as PDF"** instead. Use **View** → **Print / Save as PDF**; the content is identical.
+
 ---
 
 ## 4. Admin
