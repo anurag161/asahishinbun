@@ -79,18 +79,7 @@ Shows this month's totals (work days, total hours, transport, net pay, salary, g
 - **Overtime** shows the time worked past 8 hours, calculated for you ("—" when there is none).
 - Per row: **pencil icon** = edit that day, **trash icon** = delete.
 
-**Transport & expense lines**: lists the auto transport alongside any expenses you have entered.
-
-**Add an expense** (the form above the list):
-
-1. Pick the **date**.
-2. Pick the **type**: **Per-diem / Personal phone use / Lodging / Other**.
-3. Enter the **amount** and, optionally, a **note**, then press **Add expense**.
-
-- Entered expenses print on **Per-diem / phone / other (attachment)**, grouped by type with date, note and amount.
-- **Only personal phone use is taxable** — it is added to salary. Per-diem goes to transport, lodging and other to "other"; all three are non-taxable.
-- Delete your own entries with the **trash icon**.
-- **Transport is not entered here.** It is applied automatically from the registered fare when a work day is saved, so it is left off the type list to prevent claiming the same journey twice. Rows marked `auto` are those automatic lines and cannot be deleted here.
+**Transport & expense lines**: shows the auto transport plus any manual expenses (personal phone, per-diem, lodging, other).
 
 ### 3-3. Monthly · Documents
 
@@ -211,7 +200,8 @@ Mail really is delivered from the demo (over HTTPS; this has been verified end t
 > **"Actual cost, capped at the registered fare" cannot be entered from any screen.**
 > The cap itself is implemented and enforced internally — a claim above the registered fare is rejected — but there is **no screen for entering an actual cost**, so it is not usable in practice. Transport today is the automatic calculation above, and only that.
 >
-> **Personal phone use, per-diem, lodging and other** expenses *can* be entered — via **Add an expense** on the Attendance & Expenses screen (see 3-2 below).
+> The same applies to **personal phone use, per-diem, lodging and other** expenses: there is no entry screen yet, so **Per-diem / phone / other (attachment)** prints "該当なし" on the demo. The document itself is finished — only the input is missing.
+> In each case the calculation and the documents are already in place; adding the screen is what remains.
 - **Meal allowance**: a flat amount on days that are **during the tournament** and **exceed 6 worked hours**. Set the amount on Pay Rates (¥0 until set).
 
 ---

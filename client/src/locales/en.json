@@ -191,20 +191,5 @@
   "bucket": {
     "daikai": "Tournament (direct)",
     "henshu": "Editorial (indirect)"
-  },
-  "expense": {
-    "title": "Add an expense",
-    "hint": "Transport is applied automatically when a work day is saved, so it is not entered here.",
-    "category": "Type",
-    "amount": "Amount (JPY)",
-    "description": "Note",
-    "add": "Add expense",
-    "added": "Expense added",
-    "perdiem": "Per-diem",
-    "phone": "Personal phone use",
-    "lodging": "Lodging",
-    "other": "Other",
-    "auto": "Auto (transport)",
-    "taxableNote": "Note: personal phone use is taxable"
   }
 }
