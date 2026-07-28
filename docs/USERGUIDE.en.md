@@ -106,7 +106,11 @@ On the timesheet and on screen, **break, worked, overtime and night** — and ev
 
 - Not limited to quarter hours — a break of `1:25` prints as `1:25`.
 - Totals accumulate past 24 hours (`101:00`), they do not wrap to `5:00`.
-- The only decimal figure is **時給換算用勤務時間**, which is decimal because it is the hours-for-hourly-rate conversion number on the client's own form.
+- The only decimal figure is **時給換算用勤務時間**, the number the hourly rate is multiplied by (June 2026: `101` × ¥1,300 = ¥131,300).
+
+> **To confirm — how this field is written when it isn't a whole number**
+> In the June 2026 timesheet we were given, the total is exactly `101:00`, so the field reads `101` — which cannot tell us whether the form writes decimals or simply whole hours.
+> This system prints two decimal places (a `108:35` total becomes `108.58`). If that differs from your practice, tell us and we will match it.
 
 On each document card:
 

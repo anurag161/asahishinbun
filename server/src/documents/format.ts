@@ -26,7 +26,19 @@ export function timeOfDay(minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-/** minutes → decimal hours as printed in 時給換算用勤務時間 (6060 → "101", 6090 → "101.5") */
+/**
+ * minutes → decimal hours for 時給換算用勤務時間 (6060 → "101", 6090 → "101.5").
+ *
+ * That the field is DECIMAL is an inference, not a transcription: on the sample
+ * 勤務表 (assets/asahidoc1.jpeg) the box reads "101" against a 101:00 total, which
+ * a whole-hour month renders identically either way. It is read as decimal hours
+ * because 101 × ¥1,300 = ¥131,300, the wage on their 請求明細書 — so it is the
+ * figure the rate multiplies.
+ *
+ * The 2-dp rounding here is OURS. No sample shows a month with a remainder, so
+ * how they write e.g. 108:35 (108.58? 108.6?) is unconfirmed — ask MORABU before
+ * treating this as fidelity-critical.
+ */
 export function decimalHours(minutes: number): string {
   const hours = Math.round((minutes / 60) * 100) / 100;
   return String(hours);
