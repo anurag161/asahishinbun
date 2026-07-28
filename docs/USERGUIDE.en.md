@@ -93,6 +93,21 @@ Five documents can be produced:
 | Invoice (請求明細書) | Breakdown of salary, transport and other |
 | Payslip (給料計算書) | Gross, withholding tax, net pay |
 
+**Time format (the same as the existing paper form)**
+
+On the timesheet and on screen, **break, worked, overtime and night** — and every total — are shown as **h:mm**, not as decimals.
+
+| Field | Example |
+|---|---|
+| Break | `1:00` / `1:25` |
+| Worked (excl. break) | `7:50` / `7:35` |
+| Direct / indirect subtotals, grand total | `101:00` / `108:35` |
+| **時給換算用勤務時間 (this field only, decimal)** | `101` / `108.58` |
+
+- Not limited to quarter hours — a break of `1:25` prints as `1:25`.
+- Totals accumulate past 24 hours (`101:00`), they do not wrap to `5:00`.
+- The only decimal figure is **時給換算用勤務時間**, which is decimal because it is the hours-for-hourly-rate conversion number on the client's own form.
+
 On each document card:
 
 - **View** — render it below the cards
