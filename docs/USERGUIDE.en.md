@@ -55,7 +55,12 @@ Shows this month's totals (work days, total hours, transport, net pay, salary, g
 **Add a work day** (form at the top):
 
 1. Enter **Date**, **Stadium**, **Start** and **End**.
-2. **Break (hours)**: tick the box and enter the break in **hours** (e.g. 1 = one hour, 0.5 = 30 min).
+2. **Break (hrs)**: tick **Break taken**, then enter the break in the field beside it as a **number of hours**.
+   - `1` = one hour, `0.5` = 30 minutes, `1.5` = 1 hour 30 minutes. **Not `60` (minutes), and not `1:00`.**
+   - The field steps in **0.25 (15 minutes)**.
+   - Untick the box to record no break (0 minutes).
+   - Entering `60` by mistake is read as 60 **hours**, and the day is rejected with "Worked time cannot be negative (check start/end/break)" rather than saved — it cannot quietly corrupt the pay.
+   - Note the asymmetry: you *enter* a number of hours, but the day tables and the timesheet PDF *display* h:mm (e.g. `1:00`).
 3. **Meal allowance**: choose `○ (yes)` or `× (no)`.
    - Selectable **only when the day's worked time exceeds 6 hours**. On days of 6 hours or less it is disabled and shows "Not eligible (worked ≤ 6h)".
 4. Press **Add work day**.
