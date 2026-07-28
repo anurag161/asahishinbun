@@ -71,6 +71,9 @@ export interface MyPageSummary {
   transportTotalYen: number;
   salaryYen: number;
   taxYen: number;
+  /** True when a day passed the 丙 table's ¥14,800 ceiling — tax and net are estimates. */
+  taxProvisional: boolean;
+  provisionalTaxDays: string[];
   grossYen: number;
   netYen: number;
   days: PayrollResult['days'];
@@ -94,6 +97,8 @@ export interface RecordsResponse {
     salaryYen: number;
     transportYen: number;
     taxYen: number;
+    taxProvisional: boolean;
+    provisionalTaxDays: string[];
     grossYen: number;
     netYen: number;
     lunchYen: number;

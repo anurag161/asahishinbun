@@ -81,12 +81,26 @@ export function MyPage() {
             </div>
             <div className="card stat">
               <span className="label">{t('mypage.tax')}</span>
-              <span className="value" style={{ fontSize: 19 }}>{yen(summary.taxYen)}</span>
+              <span className="value" style={{ fontSize: 19 }}>
+                {yen(summary.taxYen)}
+                {summary.taxProvisional && (
+                  <span className="pill warn" style={{ marginLeft: 6, fontSize: 11 }}>
+                    {t('mypage.provisionalTax')}
+                  </span>
+                )}
+              </span>
             </div>
             <div className="card stat" style={{ justifyContent: 'center' }}>
               <Link className="btn primary" to="/export">{t('mypage.goExport')}</Link>
             </div>
           </div>
+
+          {/* Never let an extrapolated 所得税 sit on the page looking settled. */}
+          {summary.taxProvisional && (
+            <div className="banner warn" style={{ marginBottom: 12 }}>
+              {t('mypage.provisionalTaxNote', { dates: summary.provisionalTaxDays.join('、') })}
+            </div>
+          )}
 
           <div className="table-wrap">
             <table className="data">
@@ -115,7 +129,12 @@ export function MyPage() {
                       <td className="num">{clock(d.workedMinutes)}</td>
                       <td className="num">{d.overtimeMinutes ? clock(d.overtimeMinutes) : '—'}</td>
                       <td className="num">{yen(d.dailyWageYen)}</td>
-                      <td className="num">{yen(d.dailyTaxYen)}</td>
+                      <td className="num">
+                        {yen(d.dailyTaxYen)}
+                        {d.taxProvisional && (
+                          <span className="muted" title={t('mypage.provisionalTax')}> ※</span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}

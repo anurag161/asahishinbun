@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { computeOvertimeMinutes, computePayroll } from './engine';
 import { DEFAULT_RATES, OVERTIME_MONTHLY_THRESHOLD_MINUTES } from './rates';
 import { lookupDailyTax } from './taxTable';
+import { JUNE_2026_ATTENDANCE, JUNE_2026_EXPENSES } from './fixtures/june2026';
 import type { AttendanceDay } from './types';
 
 const H = 60;
@@ -105,25 +106,47 @@ describe('daily overtime past the 8h statutory day', () => {
 
 describe('overtime pushes days past the transcribed 丙 table sooner than before', () => {
   /**
-   * Documents a REAL limit, it doesn't bless it. The table is transcribed to
-   * ¥14,800/day; above that `lookupDailyTax` extrapolates and flags `provisional`,
-   * but computePayroll drops that flag, so the estimate is indistinguishable from
-   * an official figure. Paying overtime lowers the day length that reaches it from
-   * ~11h24m to ~10h45m — well inside a long stadium shift.
+   * The table is transcribed to ¥14,800/day; above that `lookupDailyTax`
+   * extrapolates. Paying overtime lowers the day length that reaches it from
+   * ~11h24m to ~10h45m — well inside a long stadium shift — so the estimate has to
+   * be labelled all the way out to the payslip rather than quietly rendered.
    */
   it('stays on transcribed rows through a 10h40m day', () => {
-    const d = computePayroll([day('2026-08-01', 10 + 40 / 60)]).days[0]!;
+    const result = computePayroll([day('2026-08-01', 10 + 40 / 60)]);
+    const d = result.days[0]!;
     expect(d.dailyWageYen).toBe(14_734);
     expect(d.dailyWageYen).toBeLessThan(14_800);
+    expect(d.taxProvisional).toBe(false);
+    expect(result.taxProvisional).toBe(false);
+    expect(result.provisionalTaxDays).toEqual([]);
   });
 
-  it('crosses into the PROVISIONAL estimate at 10h45m — flag currently dropped', () => {
-    const d = computePayroll([day('2026-08-01', 10.75)]).days[0]!;
+  it('flags the day AND the month once 10h45m crosses the ceiling', () => {
+    const result = computePayroll([day('2026-08-01', 10.75)]);
+    const d = result.days[0]!;
     expect(d.dailyWageYen).toBe(14_869);
-    expect(d.dailyWageYen).toBeGreaterThanOrEqual(14_800);
-    // The engine reports a tax figure with no indication it is an estimate.
     expect(lookupDailyTax(d.dailyWageYen).provisional).toBe(true);
-    expect(d).not.toHaveProperty('taxProvisional');
+    expect(d.taxProvisional).toBe(true);
+    expect(result.taxProvisional).toBe(true);
+    expect(result.provisionalTaxDays).toEqual(['2026-08-01']);
+  });
+
+  it('names only the offending days, so a normal month stays unflagged', () => {
+    const result = computePayroll([
+      day('2026-08-01', 8),
+      day('2026-08-02', 10.75),
+      day('2026-08-03', 7),
+    ]);
+    expect(result.taxProvisional).toBe(true);
+    expect(result.provisionalTaxDays).toEqual(['2026-08-02']);
+    expect(result.days.filter((d) => d.taxProvisional)).toHaveLength(1);
+  });
+
+  it('leaves the golden master unflagged — every June day is on a transcribed row', () => {
+    const result = computePayroll(JUNE_2026_ATTENDANCE, JUNE_2026_EXPENSES);
+    expect(result.taxProvisional).toBe(false);
+    expect(result.provisionalTaxDays).toEqual([]);
+    expect(result.taxYen).toBe(188);
   });
 });
 

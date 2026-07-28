@@ -12,6 +12,7 @@
   --good: #1a7f52;
   --good-soft: #e5f4ec;
   --warn: #9a6a00;
+  --warn-soft: #fdf3dd;
   --danger: #b3261e;
   --danger-soft: #fbeae9;
   --shadow: 0 1px 2px rgba(20, 30, 60, 0.06), 0 4px 16px rgba(20, 30, 60, 0.05);
@@ -35,6 +36,7 @@
     --good: #4ec08a;
     --good-soft: #172a22;
     --warn: #d6a54a;
+    --warn-soft: #2c2416;
     --danger: #e5837c;
     --danger-soft: #2e1d1d;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
@@ -44,13 +46,13 @@
   --bg: #f4f5f8; --surface: #fff; --surface-2: #f7f8fb; --border: #dfe3ec;
   --text: #1a1f2b; --text-muted: #5b6472; --accent: #1f3a8a; --accent-hover: #172d6e;
   --accent-soft: #eaeefb; --good: #1a7f52; --good-soft: #e5f4ec; --danger: #b3261e;
-  --danger-soft: #fbeae9;
+  --danger-soft: #fbeae9; --warn: #9a6a00; --warn-soft: #fdf3dd;
 }
 :root[data-theme="dark"] {
   --bg: #12151c; --surface: #1a1e28; --surface-2: #20252f; --border: #2c323e;
   --text: #e7eaf0; --text-muted: #99a1b0; --accent: #7c93e8; --accent-hover: #93a6ef;
   --accent-soft: #222a44; --good: #4ec08a; --good-soft: #172a22; --danger: #e5837c;
-  --danger-soft: #2e1d1d;
+  --danger-soft: #2e1d1d; --warn: #d6a54a; --warn-soft: #2c2416;
 }
 
 * { box-sizing: border-box; }
@@ -204,11 +206,14 @@ table.data td select { max-width: 172px; }
 .pill.henshu { background: var(--accent-soft); color: var(--accent); }
 .pill.daikai { background: var(--good-soft); color: var(--good); }
 .pill.auto { background: var(--surface-2); color: var(--text-muted); }
+/* 暫定 — an estimated figure, not a settled one. */
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
 .muted { color: var(--text-muted); }
 .empty-state { padding: 32px; text-align: center; color: var(--text-muted); }
 .banner { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 12px; }
 .banner.ok { background: var(--good-soft); color: var(--good); }
 .banner.err { background: var(--danger-soft); color: var(--danger); }
+.banner.warn { background: var(--warn-soft); color: var(--warn); }
 
 /* Toast */
 .toast-wrap { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }

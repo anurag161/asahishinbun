@@ -54,7 +54,9 @@
     "tax": "Withholding tax",
     "net": "Net pay",
     "gross": "Gross",
-    "goExport": "View monthly documents"
+    "goExport": "View monthly documents",
+    "provisionalTax": "estimate",
+    "provisionalTaxNote": "Note: {{dates}} exceeded ¥14,800 of taxable pay in a day, which is above the range of the daily 丙 table. The withholding for those days is an estimate, so tax and net pay are not final."
   },
   "attendance": {
     "title": "Attendance & Expenses",
@@ -152,7 +154,9 @@
     "lunch": "Meal allowance",
     "details": "Details",
     "retagTitle": "Re-tag cost bucket (direct / indirect)",
-    "retagHint": "Assign each work day to Tournament (direct) or Editorial (indirect). Its transport moves to the same bucket."
+    "retagHint": "Assign each work day to Tournament (direct) or Editorial (indirect). Its transport moves to the same bucket.",
+    "provisionalTax": "estimate",
+    "provisionalTaxNote": "Rows marked \"estimate\" include a day above ¥14,800 of taxable pay. That is beyond the transcribed 丙 table, so the withholding for those days is estimated — confirm the official figure before finalising."
   },
   "accounts": {
     "title": "Accounts",

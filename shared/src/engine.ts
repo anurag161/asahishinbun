@@ -129,7 +129,13 @@ export function computePayroll(
     const dailyWageYen = baseWageYen + overtimeWageYen + nightWageYen + lunchYen;
 
     // Per-day withholding — looked up on the day's taxable wage, then summed.
-    const { tax: dailyTaxYen, rank: taxRank } = lookupDailyTax(dailyWageYen, taxTable);
+    // `provisional` travels WITH the figure: above the transcribed ceiling the tax
+    // is extrapolated, and an estimate that looks official is worse than no figure.
+    const {
+      tax: dailyTaxYen,
+      rank: taxRank,
+      provisional: taxProvisional,
+    } = lookupDailyTax(dailyWageYen, taxTable);
 
     salaryFromWages += dailyWageYen;
     taxYen += dailyTaxYen;
@@ -156,6 +162,7 @@ export function computePayroll(
       dailyWageYen,
       taxRank,
       dailyTaxYen,
+      taxProvisional,
     });
   }
 
@@ -182,11 +189,17 @@ export function computePayroll(
   const grossYen = salaryYen + transportYen + otherYen;
   const netYen = grossYen - taxYen;
 
+  // One provisional day makes the month's 所得税 — and therefore 差引支給額 — an
+  // estimate. Surface it at the top level so callers don't have to scan the days.
+  const provisionalTaxDays = days.filter((d) => d.taxProvisional).map((d) => d.date);
+
   return {
     days,
     workedMinutesTotal,
     salaryYen,
     taxYen,
+    taxProvisional: provisionalTaxDays.length > 0,
+    provisionalTaxDays,
     transportYen,
     otherYen,
     grossYen,

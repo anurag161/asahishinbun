@@ -133,7 +133,11 @@ For confirming that document email is delivered.
   - The invoice itemises it as "hourly (all worked time)" plus "overtime (premium)".
   - Past **60 overtime hours in a month**, the remainder moves to the higher premium (1.5× by default).
   - Breaks don't count as worked time: 10:00–19:00 with a 1h break is 8 hours worked, so no overtime.
-- **Withholding tax**: looked up **per day** in the daily table (category 丙) and summed — not applied to the monthly total. It starts once a day's taxable amount exceeds about ¥9,800.
+- **Withholding tax**: looked up **per day** in the daily table (category 丙) and summed — not applied to the monthly total. It starts once a day's taxable amount exceeds about ¥9,800. The overtime premium is taxable and included.
+- **About the "estimate" label**: the 丙 daily table held in this system covers up to **¥14,800 per day**. Above that, the tax for that day is an **estimate outside the transcribed range**.
+  - When a month contains such a day, **My Page**, **All Records** and the **payslip** show an "**estimate**" label naming the dates. No label means every figure came from the official rows.
+  - With overtime paid, this starts at about **10h45m worked** (¥14,869 taxable). Without overtime it took about 11h24m.
+  - **In a month showing the label, the withholding tax and net pay are not final.** Confirm the official figure before finalising.
 - **Transport**: registered **one-way fare × 2 (round trip) × work days**. Non-taxable.
 - **Meal allowance**: a flat amount on days that are **during the tournament** and **exceed 6 worked hours**. Set the amount on Pay Rates (¥0 until set).
 
@@ -143,6 +147,6 @@ For confirming that document email is delivered.
 
 - Each screen opens on a **month that has data**; once you enter data it opens on the current month.
 - The demo environment resets its data when the server restarts, returning to the sample (June 2026).
-- The 丙 daily tax table currently covers up to ¥14,800 per day; days above that are estimated provisionally (confirm official values).
+- The 丙 daily tax table currently covers up to ¥14,800 per day; days above that are estimated, and the screens and payslip label them "**estimate**" (see section 5 — confirm official values).
 
 For questions, contact the vendor (MORABU Hanshin Kogyo).

@@ -81,7 +81,86 @@ describe('a 10h day earns the 時間外 premium end-to-end', () => {
     expect(res.text).toContain('¥650');
   });
 
-  it('leaves the June golden master untouched — no sample day passes 8h', async () => {
+  it('does not flag the tax as provisional — ¥13,650 is on a transcribed 丙 row', async () => {
+    await addLongDay();
+
+    const mine = await request(ctx.app)
+      .get('/api/mypage/summary?month=2026-06')
+      .set(auth(ctx.staffToken));
+    expect(mine.body.taxProvisional).toBe(false);
+    expect(mine.body.provisionalTaxDays).toEqual([]);
+  });
+});
+
+describe('a day past the 丙 table ceiling is labelled 暫定, never shown as settled', () => {
+  /** 09:00–20:45, 1h break = 10h45m worked → ¥14,869 > the ¥14,800 transcribed ceiling. */
+  const HUGE_DAY = {
+    date: '2026-06-28',
+    startMinutes: 9 * 60,
+    endMinutes: 20 * 60 + 45,
+    breakTaken: true,
+    breakMinutes: 60,
+  };
+
+  async function addHugeDay() {
+    const stadiums = await request(ctx.app).get('/api/stadiums').set(auth(ctx.staffToken));
+    const res = await request(ctx.app)
+      .post('/api/attendance')
+      .set(auth(ctx.staffToken))
+      .send({ ...HUGE_DAY, stadiumId: stadiums.body[0].id });
+    expect(res.status).toBe(201);
+  }
+
+  it('flags it on My Page with the offending date', async () => {
+    await addHugeDay();
+
+    const res = await request(ctx.app)
+      .get('/api/mypage/summary?month=2026-06')
+      .set(auth(ctx.staffToken));
+    const day = res.body.days.find((d: any) => d.date === HUGE_DAY.date);
+
+    expect(day.dailyWageYen).toBe(14_869);
+    expect(day.taxProvisional).toBe(true);
+    expect(res.body.taxProvisional).toBe(true);
+    expect(res.body.provisionalTaxDays).toEqual([HUGE_DAY.date]);
+  });
+
+  it('flags the admin 全体実績 row', async () => {
+    await addHugeDay();
+
+    const res = await request(ctx.app)
+      .get('/api/admin/records?month=2026-06')
+      .set(auth(ctx.adminToken));
+    const row = res.body.records.find((r: any) => r.staffId === ctx.staffId);
+
+    expect(row.taxProvisional).toBe(true);
+    expect(row.provisionalTaxDays).toEqual([HUGE_DAY.date]);
+  });
+
+  it('prints the 暫定 notice on the 給料計算書', async () => {
+    await addHugeDay();
+
+    const res = await request(ctx.app)
+      .get(`/api/documents/payslip/${ctx.staffId}?month=2026-06`)
+      .set(auth(ctx.adminToken));
+    expect(res.status).toBe(200);
+
+    expect(res.text).toContain('※暫定');
+    expect(res.text).toContain('暫定計算');
+    expect(res.text).toContain('¥14,800');
+  });
+
+  it('prints no notice at all on an ordinary month', async () => {
+    const res = await request(ctx.app)
+      .get(`/api/documents/payslip/${ctx.staffId}?month=2026-06`)
+      .set(auth(ctx.adminToken));
+
+    expect(res.text).not.toContain('暫定');
+  });
+});
+
+describe('the June golden master', () => {
+  it('is untouched — no sample day passes 8h', async () => {
     const res = await request(ctx.app)
       .get('/api/mypage/summary?month=2026-06')
       .set(auth(ctx.staffToken));

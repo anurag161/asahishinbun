@@ -27,6 +27,10 @@ export function mypageRouter(db: Db): Router {
         transportTotalYen: result.transportYen,
         salaryYen: result.salaryYen,
         taxYen: result.taxYen,
+        // The 丙 table is transcribed to ¥14,800/day; above that the tax is an
+        // estimate. Ship the flag so the UI can't present it as settled.
+        taxProvisional: result.taxProvisional,
+        provisionalTaxDays: result.provisionalTaxDays,
         grossYen: result.grossYen,
         netYen: result.netYen,
         days: result.days,

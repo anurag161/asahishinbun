@@ -86,6 +86,12 @@ export function RecordsPage() {
       {error && <div className="banner err">{error}</div>}
       {loading && <div className="empty-state">{t('common.loading')}</div>}
 
+      {/* An extrapolated 所得税 must never read as a settled figure on the summary
+          the admin signs off from. */}
+      {!loading && data?.records.some((r) => r.taxProvisional) && (
+        <div className="banner warn">{t('records.provisionalTaxNote')}</div>
+      )}
+
       <div className="table-wrap" style={{ display: loading ? 'none' : undefined }}>
         <table className="data">
           <thead>
@@ -124,7 +130,16 @@ export function RecordsPage() {
                   </td>
                   <td className="num">{yen(r.salaryYen)}</td>
                   <td className="num">{yen(r.transportYen)}</td>
-                  <td className="num">{yen(r.taxYen)}</td>
+                  <td className="num">
+                    {yen(r.taxYen)}
+                    {r.taxProvisional && (
+                      <div>
+                        <span className="pill warn" title={r.provisionalTaxDays.join('、')}>
+                          {t('records.provisionalTax')}
+                        </span>
+                      </div>
+                    )}
+                  </td>
                   <td className="num">{yen(r.netYen)}</td>
                   <td className="num">{yen(r.lunchYen)}</td>
                   <td className="num">

@@ -442,6 +442,20 @@ export function buildInvoiceHtml(ctx: DocumentContext): string {
   return htmlShell(`${DOCUMENT_TITLE.invoice} ${monthLabel(ctx.month)}`, body);
 }
 
+/**
+ * 暫定 notice. The 丙 日額表 is transcribed to ¥14,800/day; a day above that (a long
+ * overtime shift will do it) gets an extrapolated 税額. The document has to say so —
+ * printing an estimate that reads like a settled figure is the failure mode.
+ */
+function provisionalTaxNote(p: PayrollResult): string {
+  if (!p.taxProvisional) return '';
+  const dates = p.provisionalTaxDays.map(dateLabel).join('、');
+  return `<p class="note-provisional" style="margin-top:10px;font-size:11px;color:#8a5a00;
+    border:1px solid #e0c07a;background:#fdf6e3;padding:6px 8px;border-radius:4px">
+    ※ ${dates} は1日の課税対象額が ¥14,800 を超えるため、所得税は日額表・丙の
+    収録範囲外の<strong>暫定計算</strong>です。正式な税額は要確認のうえ確定してください。</p>`;
+}
+
 // --- 給料計算書 (payslip) ---
 export function buildPayslipHtml(ctx: DocumentContext): string {
   const p = ctx.payroll;
@@ -461,10 +475,13 @@ export function buildPayslipHtml(ctx: DocumentContext): string {
         ${line('出張日当', a.perdiem)}
         ${line('宿泊実費 等', p.otherYen)}
         <tr class="total"><td>支給額計</td><td class="num">${yen(p.grossYen)}</td></tr>
-        ${line('所得税', p.taxYen)}
-        <tr class="grand"><td>差引支給額</td><td class="num">${yen(p.netYen)}</td></tr>
+        ${line('所得税', p.taxYen, p.taxProvisional ? '※暫定' : '')}
+        <tr class="grand"><td>差引支給額</td><td class="num">${yen(p.netYen)}${
+          p.taxProvisional ? '<span style="color:#888"> ※暫定</span>' : ''
+        }</td></tr>
       </tbody>
     </table>
+    ${provisionalTaxNote(p)}
     <p class="footer">朝日新聞社</p>`;
   return htmlShell(`${DOCUMENT_TITLE.payslip} ${monthLabel(ctx.month)}`, body);
 }

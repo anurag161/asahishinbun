@@ -358,6 +358,9 @@ export function adminRouter(db: Db, mailer: Mailer): Router {
             salaryYen: payroll.result.salaryYen,
             transportYen: payroll.result.transportYen,
             taxYen: payroll.result.taxYen,
+            // Any day past the 丙 table's ¥14,800 ceiling makes this an estimate.
+            taxProvisional: payroll.result.taxProvisional,
+            provisionalTaxDays: payroll.result.provisionalTaxDays,
             grossYen: payroll.result.grossYen,
             netYen: payroll.result.netYen,
             // 弁当代 cost for the month = Σ per-day 弁当代 (0 until the amount is set

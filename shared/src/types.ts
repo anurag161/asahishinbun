@@ -141,6 +141,13 @@ export interface DayComputation {
   taxRank: number;
   /** 税額 — per-day withholding from the 丙 table. */
   dailyTaxYen: number;
+  /**
+   * True when `dailyTaxYen` came from the extrapolation above the transcribed
+   * ceiling (¥14,800/day) rather than the official 丙 rows — an ESTIMATE. Long
+   * overtime days reach this, so it must be shown, never quietly rendered as a
+   * settled figure.
+   */
+  taxProvisional: boolean;
 }
 
 /** Full monthly payroll result — the single source of truth for the documents. */
@@ -153,6 +160,10 @@ export interface PayrollResult {
   salaryYen: number;
   /** 所得税 = Σ per-day tax. */
   taxYen: number;
+  /** True when ANY day's tax was extrapolated — makes 所得税 and 差引支給額 estimates. */
+  taxProvisional: boolean;
+  /** The dates whose tax was extrapolated, so the UI can point at them. */
+  provisionalTaxDays: string[];
   /** 交通費 (②+⑤) = transport + per-diem. Non-taxable. */
   transportYen: number;
   /** その他 (③+⑥) = lodging + other. Non-taxable. */
