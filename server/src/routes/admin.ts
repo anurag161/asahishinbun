@@ -208,6 +208,15 @@ export function adminRouter(db: Db, mailer: Mailer): Router {
   // callers may still pass an explicit routeNote to override it.
   const deriveRouteNote = (from: string, to: string) => `${from}→${to}`;
 
+  // The station names a route may be keyed on, so 区間マスタ can offer them as a
+  // choice instead of asking an admin to retype a name that has to match exactly.
+  router.get(
+    '/stations',
+    asyncHandler(async (_req, res) => {
+      res.json(await masterRepo.listKnownStations(db));
+    }),
+  );
+
   router.get(
     '/route-fares',
     asyncHandler(async (_req, res) => {

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../../api/client';
-import type { RouteFare } from '../../api/types';
+import type { KnownStations, RouteFare } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { yen } from '../../utils/format';
 
@@ -10,10 +10,100 @@ type EditForm = { fromStation: string; toStation: string; oneWayFare: number; mo
 /** The 経路メモ is generated automatically; keep this in sync with the server. */
 const routeNoteOf = (from: string, to: string) => (from && to ? `${from}→${to}` : '—');
 
+/**
+ * Sentinel for the その他 option. A value no station name can collide with, so
+ * choosing it is never confused with picking a real station.
+ */
+const OTHER = '\u0000other';
+
+const EMPTY_STATIONS: KnownStations = { stadiums: [], homes: [] };
+
+/**
+ * Station picker for 区間マスタ.
+ *
+ * Auto transport looks a route up by matching the station strings EXACTLY, so a
+ * name typed as 甲子園駅 against a stadium registered as 阪神甲子園駅 never
+ * resolves and the day silently books ¥0 — with nothing on screen to say why.
+ * Offering the registered names as a list removes that whole class of mistake.
+ *
+ * Free text stays reachable through その他, because a fare may legitimately need
+ * registering before the matching 球場/アルバイト record exists. It is an opt-in
+ * with a warning attached rather than the default path.
+ */
+function StationSelect({
+  value,
+  stations,
+  onChange,
+  required,
+}: {
+  value: string;
+  stations: KnownStations;
+  onChange: (v: string) => void;
+  required?: boolean;
+}) {
+  const { t } = useTranslation();
+  // A station registered both as a home and as a stadium station must appear in
+  // one group only — duplicated <option> keys would collide.
+  const homesOnly = stations.homes.filter((s) => !stations.stadiums.includes(s));
+  const isKnown = stations.stadiums.includes(value) || homesOnly.includes(value);
+
+  const [manual, setManual] = useState(false);
+  // An existing row whose station is not (or no longer) in either master opens
+  // in free-text mode, so editing it can never silently blank the name.
+  const showManual = manual || (value !== '' && !isKnown);
+
+  return (
+    <div className="station-control">
+      <select
+        value={showManual ? OTHER : value}
+        required={required && !showManual}
+        onChange={(e) => {
+          if (e.target.value === OTHER) {
+            setManual(true);
+            onChange('');
+          } else {
+            setManual(false);
+            onChange(e.target.value);
+          }
+        }}
+      >
+        <option value="">—</option>
+        {stations.stadiums.length > 0 && (
+          <optgroup label={t('routes.stationGroupStadium')}>
+            {stations.stadiums.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </optgroup>
+        )}
+        {homesOnly.length > 0 && (
+          <optgroup label={t('routes.stationGroupHome')}>
+            {homesOnly.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </optgroup>
+        )}
+        <option value={OTHER}>{t('routes.stationOther')}</option>
+      </select>
+      {showManual && (
+        <>
+          <input
+            value={value}
+            required={required}
+            placeholder={t('routes.stationOther')}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          <span className="station-note">{t('routes.stationFreeWarn')}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function RouteFaresPage() {
   const { t } = useTranslation();
   const { notify } = useToast();
   const [list, setList] = useState<RouteFare[]>([]);
+  const [stations, setStations] = useState<KnownStations>(EMPTY_STATIONS);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [fare, setFare] = useState(0);
@@ -25,7 +115,13 @@ export function RouteFaresPage() {
     notify(e instanceof ApiError ? e.message : t('common.loadError'), 'err');
   }
   const reload = () => api.get<RouteFare[]>('/api/admin/route-fares').then(setList).catch(fail);
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    reload();
+    // The station list only changes when a 球場 or アルバイト record does, so it is
+    // fetched once. A failure leaves the picker with just その他 rather than
+    // blocking the page — registering a fare stays possible either way.
+    api.get<KnownStations>('/api/admin/stations').then(setStations).catch(() => setStations(EMPTY_STATIONS));
+  }, []);
 
   async function add(e: FormEvent) {
     e.preventDefault();
@@ -76,9 +172,9 @@ export function RouteFaresPage() {
       <form className="card" onSubmit={add} style={{ marginBottom: 18 }}>
         <div className="row">
           <div className="field"><label>{t('routes.from')}</label>
-            <input value={from} onChange={(e) => setFrom(e.target.value)} required /></div>
+            <StationSelect value={from} stations={stations} onChange={setFrom} required /></div>
           <div className="field"><label>{t('routes.to')}</label>
-            <input value={to} onChange={(e) => setTo(e.target.value)} required /></div>
+            <StationSelect value={to} stations={stations} onChange={setTo} required /></div>
           <div className="field" style={{ maxWidth: 130 }}><label>{t('routes.fare')}</label>
             <input type="number" min={0} value={fare} onChange={(e) => setFare(Number(e.target.value))} required /></div>
           <div className="field" style={{ maxWidth: 140 }}><label>{t('routes.mode')}</label>
@@ -101,8 +197,10 @@ export function RouteFaresPage() {
               <tr><td colSpan={6} className="muted" style={{ textAlign: 'center' }}>{t('common.none')}</td></tr>
             ) : list.map((r) => editId === r.id ? (
               <tr key={r.id}>
-                <td><input value={edit.fromStation} onChange={(e) => setEF('fromStation', e.target.value)} /></td>
-                <td><input value={edit.toStation} onChange={(e) => setEF('toStation', e.target.value)} /></td>
+                <td><StationSelect value={edit.fromStation} stations={stations}
+                  onChange={(v) => setEF('fromStation', v)} /></td>
+                <td><StationSelect value={edit.toStation} stations={stations}
+                  onChange={(v) => setEF('toStation', v)} /></td>
                 <td className="num"><input type="number" min={0} value={edit.oneWayFare} onChange={(e) => setEF('oneWayFare', Number(e.target.value))} style={{ maxWidth: 110 }} /></td>
                 <td><input value={edit.mode} onChange={(e) => setEF('mode', e.target.value)} style={{ maxWidth: 120 }} /></td>
                 <td className="muted">{routeNoteOf(edit.fromStation, edit.toStation)}</td>

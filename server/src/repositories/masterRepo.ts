@@ -48,6 +48,31 @@ export const masterRepo = {
     await db.query(`DELETE FROM stadiums WHERE id = $1`, [id]);
   },
 
+  /**
+   * Every station name auto transport can currently match on, split by where it
+   * came from (球場マスタ vs アルバイトマスタ).
+   *
+   * findRouteFare matches the station strings EXACTLY, so a route typed as
+   * 甲子園駅 against a stadium registered as 阪神甲子園駅 never resolves and the
+   * day silently books ¥0. Offering these names as a choice on 区間マスタ is what
+   * removes that failure mode.
+   *
+   * Deduped and sorted in JS rather than with DISTINCT/ORDER BY so the query
+   * stays plain enough for both Postgres and the in-memory demo DB.
+   */
+  async listKnownStations(db: Db): Promise<{ stadiums: string[]; homes: string[] }> {
+    const clean = (rows: { station: string | null }[]) =>
+      [...new Set(rows.map((r) => r.station?.trim()).filter((s): s is string => !!s))].sort();
+
+    const { rows: stadiumRows } = await db.query<{ station: string | null }>(
+      `SELECT nearest_station AS station FROM stadiums`,
+    );
+    const { rows: homeRows } = await db.query<{ station: string | null }>(
+      `SELECT home_nearest_station AS station FROM staff_profiles`,
+    );
+    return { stadiums: clean(stadiumRows), homes: clean(homeRows) };
+  },
+
   // --- 区間別交通費マスタ ---
   async listRouteFares(db: Db): Promise<RouteFareRow[]> {
     const { rows } = await db.query<RouteFareRow>(

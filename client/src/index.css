@@ -188,6 +188,15 @@ input:focus, select:focus, .btn:focus-visible, .nav a:focus-visible {
    from the accessibility tree while the toggle is usable. */
 .field-note.is-hidden { visibility: hidden; }
 
+/* 区間マスタ: the station list and, only while その他 is in use, the free-text box
+   plus why it is risky. Stacked, so the row grows only when free text is
+   actually being typed. */
+.station-control { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.station-control > select, .station-control > input { min-width: 0; }
+/* Deliberately not .field-note: that one carries flex-basis 152px for a ROW, and
+   inside this column container the basis would be read as a 152px height. */
+.station-note { font-size: 11px; line-height: 1.3; color: var(--warn); max-width: 260px; white-space: normal; }
+
 /* Tables */
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
