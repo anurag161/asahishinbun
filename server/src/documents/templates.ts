@@ -394,9 +394,16 @@ function invoiceAgg(payroll: PayrollResult): InvoiceAgg {
   };
 }
 
-/** 時間外 note: unit price, plus the hours it was charged on once there are any. */
+/**
+ * 時間外 note: unit price, plus the hours it was charged on once there are any.
+ *
+ * Decimal for the same reason as the 時給 line above it — this is the number the
+ * unit price was multiplied by to reach the amount beside it, not a duration
+ * being reported. 2:15 of overtime is billed as 2.25 × ¥325, so printing `2:15`
+ * would show a quantity that does not reconcile with its own line.
+ */
 function otNote(unitYen: number, minutes: number): string {
-  return `@${num(unitYen)}円${minutes ? ` × ${clock(minutes)}（8時間超）` : ''}`;
+  return `@${num(unitYen)}円${minutes ? ` × ${decimalHours(minutes)}（8時間超）` : ''}`;
 }
 
 function line(label: string, value: number, note = ''): string {

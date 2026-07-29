@@ -76,9 +76,32 @@ describe('a 10h day earns the 時間外 premium end-to-end', () => {
     expect(res.status).toBe(200);
 
     // The premium gets its own line at the ≤60h unit price, quantified in hours.
+    // DECIMAL, like the 時給 line: it is the quantity the ¥325 was multiplied by
+    // (2 × ¥325 = ¥650), not a duration being reported. h:mm on this row would
+    // not reconcile with the amount beside it.
     expect(res.text).toContain('時間外（60h以下）');
-    expect(res.text).toContain('@325円 × 2:00（8時間超）');
+    expect(res.text).toContain('@325円 × 2（8時間超）');
+    expect(res.text).not.toContain('2:00（8時間超）');
     expect(res.text).toContain('¥650');
+  });
+
+  it('writes a part-hour premium as 2.25, the figure that reconciles with ¥731', async () => {
+    // 10:00–21:15 less a 1h break = 10h15m worked → 2h15m overtime.
+    const stadiums = await request(ctx.app).get('/api/stadiums').set(auth(ctx.staffToken));
+    await request(ctx.app)
+      .post('/api/attendance')
+      .set(auth(ctx.staffToken))
+      .send({ ...LONG_DAY, endMinutes: 21 * 60 + 15, stadiumId: stadiums.body[0].id })
+      .expect(201);
+
+    const res = await request(ctx.app)
+      .get(`/api/documents/invoice/${ctx.staffId}?month=2026-06`)
+      .set(auth(ctx.adminToken));
+
+    // 2.25 × ¥325 = ¥731.25 → ¥731. Asserting both halves is the point: the row
+    // has to be arithmetic a reader can redo. Printed as 2:15 it isn't.
+    expect(res.text).toContain('@325円 × 2.25（8時間超）');
+    expect(res.text).toMatch(/2\.25（8時間超）<\/span><\/td>\s*<td class="num">¥731<\/td>/);
   });
 
   it('does not flag the tax as provisional — ¥13,650 is on a transcribed 丙 row', async () => {
