@@ -14,7 +14,11 @@ const ADMIN_LINKS = [
   { to: '/admin/staff', key: 'nav.staff' },
   { to: '/admin/accounts', key: 'nav.accounts' },
   { to: '/admin/routes', key: 'nav.routes' },
-  { to: '/admin/rates', key: 'nav.rates' },
+  // 単価設定 is deliberately absent from the nav, NOT deleted: the route, the page
+  // and /api/admin/rates all still work, and /admin/rates remains reachable by
+  // URL. It is the only UI for 時給 and the 弁当代 amount, so it has to stay usable
+  // for when MORABU confirms that figure — it is just not something Asahi should
+  // be invited into during the demo.
   { to: '/admin/email', key: 'nav.email' },
 ];
 

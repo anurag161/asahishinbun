@@ -129,7 +129,10 @@ On each document card:
 
 ## 4. Admin
 
-Top menu: **All Records / Stadiums / Staff / Accounts / Route Fares / Pay Rates / Email Settings**
+Top menu: **All Records / Stadiums / Staff / Accounts / Route Fares / Email Settings**
+
+> **About Pay Rates**: it is no longer shown in the top menu. The screen itself is still there —
+> open `/admin/rates` directly and it works as before (hourly, overtime, night premium, meal allowance).
 
 ### 4-1. All Records
 
@@ -147,10 +150,10 @@ Monthly totals for every staff member (work days, worked, **overtime**, salary, 
 | Stadiums | Name, address, nearest station |
 | Staff | Name, postal code, address, home nearest station, phone |
 | Route Fares | **One-way fare** between a home station and a stadium station (drives auto transport) |
-| Pay Rates | Hourly, overtime (≤60h / >60h), night premium, **meal allowance (flat)** |
+| Pay Rates (hidden from the menu — `/admin/rates`) | Hourly, overtime (≤60h / >60h), night premium, **meal allowance (flat)** |
 | Accounts | Create accounts, change roles, reset passwords, delete |
 
-**The meal-allowance amount** is entered on **Pay Rates**. It starts at **¥0**. Enter an amount and save, and it is added to the wage on qualifying (○) days and flows into the documents and All Records.
+**The meal-allowance amount** is entered on **Pay Rates** (open `/admin/rates` directly). It starts at **¥0**. Enter an amount and save, and it is added to the wage on qualifying (○) days and flows into the documents and All Records.
 
 ### 4-3. Email Settings
 
