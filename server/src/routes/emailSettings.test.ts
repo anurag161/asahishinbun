@@ -156,8 +156,11 @@ describe('Resend HTTPS delivery', () => {
       return new Response(JSON.stringify({ id: 'msg_123' }), { status: 200 });
     }) as typeof fetch;
 
-    // Fresh app so createMailer() picks up the key.
-    const local = await makeTestContext();
+    // Fresh app so createMailer() picks up the key. The mailer is deliberately
+    // NOT stubbed here — the Resend path is what's under test — but the PDF
+    // renderer is: left real it launches Chromium just to probe available(),
+    // which is seconds of cold start and what intermittently blew the timeout.
+    const local = await makeTestContext({ pdf });
     const res = await request(local.app)
       .post(`/api/documents/payslip/${local.staffId}/email?month=2026-06`)
       .set(auth(local.staffToken));
@@ -175,7 +178,7 @@ describe('Resend HTTPS delivery', () => {
     globalThis.fetch = (async () =>
       new Response(JSON.stringify({ message: 'domain is not verified' }), { status: 403 })) as typeof fetch;
 
-    const local = await makeTestContext();
+    const local = await makeTestContext({ pdf });
     const res = await request(local.app)
       .post(`/api/documents/payslip/${local.staffId}/email?month=2026-06`)
       .set(auth(local.staffToken));

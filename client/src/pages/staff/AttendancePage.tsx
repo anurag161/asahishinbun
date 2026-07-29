@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { overtimeMinutesFor } from '@asahi/shared';
 import { api, ApiError } from '../../api/client';
-import type { AttendanceRow, ExpenseRow, Stadium, TransportResult } from '../../api/types';
+import type {
+  AttendanceRow,
+  ExpenseRow,
+  Stadium,
+  TransportPreview,
+  TransportResult,
+} from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { MonthPicker } from '../../components/MonthPicker';
 import { useMonth } from '../../hooks/useMonth';
@@ -43,6 +49,10 @@ export function AttendancePage() {
   // 弁当代有無 — a ○/× the staff can only pick when the day exceeds 6 worked hours.
   const [lunchAllowance, setLunchAllowance] = useState(false);
   const [busy, setBusy] = useState(false);
+  // 交通費 for the selected stadium, resolved server-side and shown before 追加 so
+  // the fare is something the staff member confirms rather than discovers in the
+  // toast afterwards. null = nothing to show yet.
+  const [preview, setPreview] = useState<TransportPreview | null>(null);
 
   // Inline row editing (pencil). null = no row open for edit.
   const [editId, setEditId] = useState<number | null>(null);
@@ -70,6 +80,30 @@ export function AttendancePage() {
     setDate(`${month}-01`);
     reload();
   }, [month, reload]);
+
+  // Re-resolve the fare whenever the stadium changes. A slow reply for the
+  // previously selected stadium must never paint over a newer one, so the
+  // in-flight request is cancelled on change.
+  useEffect(() => {
+    if (stadiumId === '') {
+      setPreview(null);
+      return;
+    }
+    let cancelled = false;
+    api
+      .get<TransportPreview>(`/api/attendance/transport-preview?stadiumId=${stadiumId}`)
+      .then((p) => {
+        if (!cancelled) setPreview(p);
+      })
+      // A failed preview stays silent: it must never look like the day itself
+      // failed to save. The toast after 追加 remains the authority.
+      .catch(() => {
+        if (!cancelled) setPreview(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [stadiumId]);
 
   async function addDay(e: FormEvent) {
     e.preventDefault();
@@ -193,6 +227,14 @@ export function AttendancePage() {
     formStart !== null && formEnd !== null ? formEnd - formStart - breakMinutes : 0;
   const lunchEligible = formWorkedMin > 6 * 60;
 
+  // 往復の内訳. The two legs are usually the same fare, but a route registered
+  // with its own return fare is allowed to differ — so don't print "× 2" unless
+  // that is actually what was charged.
+  const fareLegs = (p: TransportPreview) =>
+    p.outboundFare === p.inboundFare
+      ? t('attendance.fareLegsSame', { oneWay: yen(p.outboundFare) })
+      : t('attendance.fareLegsDiff', { out: yen(p.outboundFare), in: yen(p.inboundFare) });
+
   return (
     <>
       <div className="pagehead">
@@ -209,8 +251,13 @@ export function AttendancePage() {
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
           </div>
           <div className="field">
-            <label>{t('attendance.stadium')}</label>
-            <select value={stadiumId} onChange={(e) => setStadiumId(Number(e.target.value))} required>
+            <label htmlFor="stadium">{t('attendance.stadium')}</label>
+            <select
+              id="stadium"
+              value={stadiumId}
+              onChange={(e) => setStadiumId(Number(e.target.value))}
+              required
+            >
               {stadiums.length === 0 && <option value="">—</option>}
               {stadiums.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -285,6 +332,39 @@ export function AttendancePage() {
             {t('attendance.addDay')}
           </button>
         </div>
+
+        {/* 交通費の自動計算プレビュー — the route and the round-trip fare this day
+            will book, shown before 追加. When it resolves to ¥0 the reason and the
+            master that fixes it are named, because "no transport appeared" is
+            otherwise indistinguishable from a genuinely free commute. */}
+        {preview && (
+          <div
+            className={`banner ${preview.applied ? 'ok' : 'warn'}`}
+            style={{ marginTop: 12, marginBottom: 0 }}
+            aria-live="polite"
+          >
+            {preview.applied ? (
+              <>
+                <strong>
+                  {preview.homeStation} → {preview.stadiumStation}
+                  {preview.mode ? `（${preview.mode}）` : ''}
+                </strong>
+                {'　'}
+                {t('attendance.fareWillApply', {
+                  yen: yen(preview.totalYen),
+                  legs: fareLegs(preview),
+                })}
+              </>
+            ) : preview.reason === 'noHomeStation' ? (
+              t('attendance.fareNoHome')
+            ) : (
+              t('attendance.fareNoRoute', {
+                from: preview.homeStation,
+                to: preview.stadiumStation,
+              })
+            )}
+          </div>
+        )}
       </form>
 
       <h2 style={{ margin: '4px 0 10px' }}>{t('attendance.existing')}</h2>

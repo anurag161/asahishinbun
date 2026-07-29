@@ -8,7 +8,7 @@ import { attendanceRepo, type AttendanceInput } from '../repositories/attendance
 import { expenseRepo } from '../repositories/expenseRepo';
 import { masterRepo } from '../repositories/masterRepo';
 import { userRepo } from '../repositories/userRepo';
-import { applyAutoTransport } from '../services/transportService';
+import { applyAutoTransport, resolveRoundTrip } from '../services/transportService';
 import { bool, int, minutesField, oneOf, str } from '../utils/parse';
 
 function parseBody(body: Record<string, unknown>, staffId: number): AttendanceInput {
@@ -69,6 +69,51 @@ export function attendanceRouter(db: Db): Router {
       const month = str(req.query as Record<string, unknown>, 'month');
       const rows = await attendanceRepo.listForMonth(db, req.user!.id, month);
       res.json(rows);
+    }),
+  );
+
+  // GET /api/attendance/transport-preview?stadiumId=N
+  //
+  // What auto transport WOULD be calculated for this stadium, so the staff member
+  // sees the route and the round-trip fare BEFORE pressing 追加 instead of finding
+  // out from the toast afterwards.
+  //
+  // Deliberately resolved through resolveRoundTrip — the same function the save
+  // path uses — so the preview cannot drift from the figure that actually lands
+  // on the day. A second fare lookup written for the form would be free to
+  // disagree with the engine, which is exactly the bug this screen is meant to
+  // make impossible.
+  //
+  // Declared before any '/:id' route so the literal path is never swallowed by a
+  // parameter match.
+  router.get(
+    '/transport-preview',
+    asyncHandler(async (req: AuthRequest, res) => {
+      const stadiumId = int(req.query as Record<string, unknown>, 'stadiumId');
+      const [profile, stadium] = await Promise.all([
+        userRepo.getProfile(db, req.user!.id),
+        masterRepo.getStadium(db, stadiumId),
+      ]);
+      if (!stadium) throw new AppError(404, 'Stadium not found');
+
+      const homeStation = profile?.home_nearest_station ?? null;
+      const trip = homeStation
+        ? await resolveRoundTrip(db, homeStation, stadium.nearest_station)
+        : null;
+
+      res.json({
+        homeStation,
+        stadiumStation: stadium.nearest_station,
+        mode: trip?.mode ?? null,
+        outboundFare: trip?.outboundFare ?? 0,
+        inboundFare: trip?.inboundFare ?? 0,
+        totalYen: trip ? trip.outboundFare + trip.inboundFare : 0,
+        applied: trip !== null,
+        // The two ways of getting ¥0 need different fixes — an unregistered home
+        // station is fixed on アルバイトマスタ, a missing pair on 区間マスタ — so the
+        // form has to be able to tell them apart.
+        reason: !homeStation ? 'noHomeStation' : trip ? null : 'noRoute',
+      });
     }),
   );
 

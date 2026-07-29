@@ -34,6 +34,29 @@ export interface RouteFare {
   route_note: string | null;
 }
 
+/**
+ * What auto transport would book for a stadium, shown on the entry form before
+ * the day is saved. Produced by the same resolver the save path runs, so the
+ * previewed fare is the fare that lands on the day.
+ */
+export interface TransportPreview {
+  homeStation: string | null;
+  stadiumStation: string;
+  mode: string | null;
+  outboundFare: number;
+  inboundFare: number;
+  totalYen: number;
+  applied: boolean;
+  /** Why the fare is ¥0: the two causes have different fixes. */
+  reason: 'noHomeStation' | 'noRoute' | null;
+}
+
+/** Station names 区間マスタ may be keyed on, grouped by where they came from. */
+export interface KnownStations {
+  stadiums: string[];
+  homes: string[];
+}
+
 export interface StaffMember {
   id: number;
   name: string;
