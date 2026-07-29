@@ -94,6 +94,41 @@ describe('document HTML reproduces the client figures', () => {
     expect(res.text).toContain('勤務表');
     expect(res.text).toContain('101:00');
   });
+
+  /**
+   * The duration-format rule, pinned end to end.
+   *
+   * MORABU's paper 勤務表 writes durations as h:mm, so every per-day 休憩/実働 cell
+   * must too — 7.83 both looks like a different document and is one glance away
+   * from being read as 7:83. The exception is the figure a rate is multiplied by
+   * (時給換算用勤務時間, and the 時給 note on the 請求明細書): that one is decimal,
+   * because 101 × ¥1,300 = ¥131,300 is where the wage comes from.
+   *
+   * This holds for the PDF as well without a second assertion: documents.ts
+   * renders the PDF from this exact HTML (deps.pdf.render(doc.html)).
+   */
+  it('writes per-day 休憩/実働 as h:mm and the rate-multiplied hours as decimal', async () => {
+    const timesheet = await request(ctx.app)
+      .get(`/api/documents/timesheet/${ctx.staffId}?month=2026-06`)
+      .set(auth(ctx.staffToken));
+
+    // 6/3 is 10:10–19:00 less a 1:00 break = 7:50. It must never render as 7.83.
+    expect(timesheet.text).toContain('>7:50<');
+    expect(timesheet.text).toContain('>1:00<');
+    expect(timesheet.text).not.toMatch(/>7\.83</);
+    // No duration cell anywhere on the sheet is written in decimal hours.
+    expect(timesheet.text).not.toMatch(/<td class="num">\d+\.\d+<\/td>/);
+    // ...except 時給換算用勤務時間, which is a bare decimal count, not a clock value.
+    expect(timesheet.text).toMatch(/時給換算用勤務時間<\/td>\s*<td class="num">101</);
+
+    const invoice = await request(ctx.app)
+      .get(`/api/documents/invoice/${ctx.staffId}?month=2026-06`)
+      .set(auth(ctx.staffToken));
+
+    // The multiplicand behind ¥131,300 — decimal, and NOT the 101:00 clock value.
+    expect(invoice.text).toContain('@1,300円 × 101');
+    expect(invoice.text).not.toContain('@1,300円 × 101:00');
+  });
 });
 
 describe('PDF endpoint', () => {

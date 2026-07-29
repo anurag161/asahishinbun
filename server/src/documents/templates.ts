@@ -407,7 +407,14 @@ function line(label: string, value: number, note = ''): string {
 export function buildInvoiceHtml(ctx: DocumentContext): string {
   const p = ctx.payroll;
   const a = invoiceAgg(p);
-  const hours = clock(p.workedMinutesTotal);
+  // DECIMAL here, unlike every duration column on the 勤務表, which is h:mm.
+  // This is not a display of how long someone worked — it is the multiplicand
+  // that produces the amount on the same line: 101 × ¥1,300 = ¥131,300. Printed
+  // as 101:00 it reads like a clock value that was never multiplied by anything,
+  // and on a month with a remainder it would claim 108:35 next to a wage derived
+  // from 108.58. Matches the 時給換算用勤務時間 box on the 勤務表, which is the same
+  // figure. Per-day 休憩/実働 stay h:mm — see clock() usage in dayCells.
+  const hours = decimalHours(p.workedMinutesTotal);
 
   const body = `
     <h1>${DOCUMENT_TITLE.invoice}</h1>
