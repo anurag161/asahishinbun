@@ -82,7 +82,12 @@
     "existing": "登録済みの勤務日",
     "expenses": "交通費・経費明細",
     "unitHour": "時間",
-    "unitMinute": "分"
+    "unitMinute": "分",
+    "fareWillApply": "往復 {{yen}}{{legs}} を自動計上します",
+    "fareLegsSame": "（片道 {{oneWay}} × 2）",
+    "fareLegsDiff": "（往路 {{out}} ＋ 復路 {{in}}）",
+    "fareNoHome": "自宅最寄り駅が未登録のため、交通費は計上されません（アルバイトマスタで登録してください）。",
+    "fareNoRoute": "{{from}} → {{to}} の区間運賃が未登録のため、交通費は ¥0 になります（区間別交通費で登録してください）。"
   },
   "export": {
     "title": "月次実績・書類",
@@ -128,7 +133,11 @@
     "mode": "交通手段",
     "note": "経路メモ",
     "noteAuto": "駅名から自動生成されます",
-    "hint": "自宅最寄り駅 ⇔ 球場最寄り駅の片道運賃を登録します"
+    "hint": "自宅最寄り駅 ⇔ 球場最寄り駅の片道運賃を登録します",
+    "stationGroupStadium": "球場最寄り駅",
+    "stationGroupHome": "自宅最寄り駅",
+    "stationOther": "その他（手入力）",
+    "stationFreeWarn": "手入力した駅名は、球場・アルバイトの登録名と完全に一致しないと交通費が計上されません。"
   },
   "rates": {
     "title": "単価設定",

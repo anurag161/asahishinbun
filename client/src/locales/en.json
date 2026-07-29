@@ -82,7 +82,12 @@
     "existing": "Registered days",
     "expenses": "Transport & expense lines",
     "unitHour": "h",
-    "unitMinute": "m"
+    "unitMinute": "m",
+    "fareWillApply": "round trip {{yen}} {{legs}} will be added automatically",
+    "fareLegsSame": "(one way {{oneWay}} × 2)",
+    "fareLegsDiff": "(outbound {{out}} + return {{in}})",
+    "fareNoHome": "No home station is registered, so no transport will be added (set it in the staff master).",
+    "fareNoRoute": "No fare is registered for {{from}} → {{to}}, so transport will be ¥0 (register it under Route Fares)."
   },
   "export": {
     "title": "Monthly / Documents",
@@ -128,7 +133,11 @@
     "mode": "Mode",
     "note": "Route note",
     "noteAuto": "Generated automatically from the stations",
-    "hint": "Register one-way fares between home and stadium stations"
+    "hint": "Register one-way fares between home and stadium stations",
+    "stationGroupStadium": "Stadium stations",
+    "stationGroupHome": "Home stations",
+    "stationOther": "Other (type it in)",
+    "stationFreeWarn": "A typed station name must match the stadium/staff record exactly, or no transport will be calculated."
   },
   "rates": {
     "title": "Pay Rates",
