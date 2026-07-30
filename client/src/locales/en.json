@@ -103,11 +103,7 @@
     "emailed": "Sent to {{to}}",
     "emailedPreview": "Sent to {{to}} — opening the email preview…",
     "emailedCaptured": "Send simulated (no SMTP configured)",
-    "print": "Print / Save as PDF",
-    "pdfReady": "PDF: server-side ready",
-    "pdfBrowser": "PDF: use the browser's Save as PDF",
-    "emailReady": "Email: SMTP configured",
-    "emailCapture": "Email: preview inbox (set SMTP_* for real delivery)"
+    "print": "Print / Save as PDF"
   },
   "stadiums": {
     "title": "Stadiums",

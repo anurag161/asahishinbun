@@ -106,11 +106,6 @@ export function ExportPage() {
         ))}
       </div>
 
-      <div className="banner" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
-        {caps.pdf ? '🖨 ' + t('export.pdfReady') : '🖨 ' + t('export.pdfBrowser')} ·{' '}
-        {caps.email ? '✉ ' + t('export.emailReady') : '✉ ' + t('export.emailCapture')}
-      </div>
-
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
           <strong>{t(`export.${active}`)}</strong>

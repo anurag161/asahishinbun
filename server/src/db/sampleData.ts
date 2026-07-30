@@ -73,7 +73,10 @@ export async function seedSampleMonth(
   await db.query(
     `INSERT INTO staff_profiles (user_id, postal_code, address, home_nearest_station, phone)
      VALUES ($1, $2, $3, $4, $5)`,
-    [staffId, '060-0001', '北海道札幌市中央区', '円山', '090-0000-0000'],
+    // Kansai address to match the 大阪球場 assignment. The home station stays
+    // '円山' — route_fares are keyed to that name, so renaming it would break
+    // the automatic transport calculation.
+    [staffId, '605-0071', '京都府京都市東山区円山町', '円山', '090-0000-0000'],
   );
 
   const stadium = await db.query(

@@ -103,11 +103,7 @@
     "emailed": "{{to}} に送信しました",
     "emailedPreview": "{{to}} に送信しました — プレビューを開きます…",
     "emailedCaptured": "送信をシミュレートしました（SMTP未設定）",
-    "print": "印刷 / PDF保存",
-    "pdfReady": "PDF: サーバー生成 有効",
-    "pdfBrowser": "PDF: ブラウザの「PDF保存」をご利用ください",
-    "emailReady": "メール: SMTP設定済み",
-    "emailCapture": "メール: プレビュー受信箱（実送信はSMTP_*設定時）"
+    "print": "印刷 / PDF保存"
   },
   "stadiums": {
     "title": "球場マスタ",
