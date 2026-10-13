@@ -309,14 +309,22 @@ export function adminRouter(db: Db, mailer: Mailer): Router {
       const to = await settingsRepo.get(db, EMAIL_TEST_RECIPIENT);
       if (!to) throw new AppError(400, 'No test recipient configured');
 
-      const { messageId, mode, previewUrl } = await mailer.send({
-        to,
-        subject: '【朝日新聞】メール送信テスト',
-        html:
-          '<p>朝日新聞 勤怠・交通費システムからのテスト送信です。</p>' +
-          '<p>このメールが届いていれば、書類のメール送信は正常に動作しています。</p>',
-        attachments: [],
-      });
+      // Surface why delivery failed, as the document email route does — the
+      // generic handler would tell the admin only "Internal server error".
+      let sendResult;
+      try {
+        sendResult = await mailer.send({
+          to,
+          subject: '【朝日新聞】メール送信テスト',
+          html:
+            '<p>朝日新聞 勤怠・交通費システムからのテスト送信です。</p>' +
+            '<p>このメールが届いていれば、書類のメール送信は正常に動作しています。</p>',
+          attachments: [],
+        });
+      } catch (err) {
+        throw new AppError(502, `Email delivery failed: ${(err as Error).message.split('\n')[0]}`);
+      }
+      const { messageId, mode, previewUrl } = sendResult;
       res.json({ sent: true, to, delivery: mode, previewUrl, messageId });
     }),
   );
